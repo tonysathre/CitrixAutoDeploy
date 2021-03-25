@@ -1,4 +1,37 @@
+function New-ScheduledTaskEventTrigger {
+    param (
+        [string]$EventLog,
+        [int]$EventId,
+        [string]$EventSource
+    )
+
+    ##
+    # https://stackoverflow.com/questions/42801733/creating-a-scheduled-task-which-uses-a-specific-event-log-entry-as-a-trigger
+    ##
+    $CIMTriggerClass = Get-CimClass -ClassName MSFT_TaskEventTrigger -Namespace Root/Microsoft/Windows/TaskScheduler:MSFT_TaskEventTrigger
+    $Trigger = New-CimInstance -CimClass $CIMTriggerClass -ClientOnly
+    $Trigger.Subscription = 
+@"
+<QueryList><Query Id="0" Path="$EventLog"><Select Path="$EventLog">*[System[Provider[@Name='$EventSource'] and EventID=$EventId]]</Select></Query></QueryList>
+"@
+    $Trigger.Enabled = $True
+
+    return $Trigger
+}
+
+
+##
+# Create event log
+##
+if (-not(Get-EventLog -LogName 'Citrix Autodeploy')) {
+    New-EventLog -LogName 'Citrix Autodeploy' -Source 'Scripts'
+}
+
+##
+# Prompt for credential to use for the autodeploy scheduled task
+##
 $Credential = Get-Credential -Message 'Scheduled task credential'
+
 
 $AutoDeployTask = @{
     Action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-executionpolicy bypass -noprofile -file $PSScriptRoot\citrix_autodeploy.ps1" -WorkingDirectory $PSScriptRoot
@@ -7,17 +40,29 @@ $AutoDeployTask = @{
     Settings  = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew
     User      = $Credential.UserName
     Password  = $Credential.GetNetworkCredential().Password
+    TaskName  = 'Citrix Autodeploy'
 }
 
 $AutoDeployErrorMonitorTask = @{
-    
+    Action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-executionpolicy bypass -noprofile -file $PSScriptRoot\citrix_autodeploy_monitor_error.ps1" -WorkingDirectory $PSScriptRoot
+    Trigger   = New-ScheduledTaskEventTrigger -EventLog 'Citrix Autodeploy' -EventId 1 -EventSource 'Scripts'
+    Principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\SYSTEM' -RunLevel Highest -LogonType ServiceAccount
+    Settings  = New-ScheduledTaskSettingsSet -MultipleInstances Queue
+    TaskName  = 'Citrix Autodeploy Error Monitor'
 }
 
 $AutoDeployMachineCreationTask = @{
-
+    Action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-executionpolicy bypass -noprofile -file $PSScriptRoot\citrix_autodeploy_monitor_machine_creation.ps1" -WorkingDirectory $PSScriptRoot
+    Trigger   = New-ScheduledTaskEventTrigger -EventLog 'Citrix Autodeploy' -EventId 3 -EventSource 'Scripts'
+    Principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\SYSTEM' -RunLevel Highest -LogonType ServiceAccount
+    Settings  = New-ScheduledTaskSettingsSet -MultipleInstances Queue
+    TaskName  = 'Citrix Autodeploy Machine Creation Monitor'
 }
 
-Register-ScheduledTask @AutoDeployTask -TaskName 'Citrix Autodeploy'
+Register-ScheduledTask @AutoDeployTask
+Register-ScheduledTask @AutoDeployErrorMonitorTask
+Register-ScheduledTask @AutoDeployMachineCreationTask
+
 
 ##
 # Add 'logon as a batch job' privilege

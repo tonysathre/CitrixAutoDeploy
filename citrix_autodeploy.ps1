@@ -16,7 +16,7 @@ function Import-ConfigFile {
         }
     }
     catch {
-        Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
         throw $Error[0]
     }
 
@@ -24,16 +24,16 @@ function Import-ConfigFile {
     return $Config 
 }
 
-# Check if our custom event log exists and if not, create it
-if (-not(Get-EventLog -LogName 'Citrix Powershell Autodeploy')) {
-    New-EventLog -LogName 'Citrix Powershell Autodeploy' -Source 'Scripts'   
+# Check if our custom event log exists
+if (-not(Get-EventLog -LogName 'Citrix Autodeploy')) {
+    throw 'Event log not found.'    
 }
 
 Write-Verbose 'Loading config ...'
 $Config = Import-ConfigFile
 
 foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
-    Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message "Autodeploy job started: $(($AutodeployMonitor | Format-List | Out-String))" -EventId 0 -EntryType Information
+    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Autodeploy job started: $(($AutodeployMonitor | Format-List | Out-String))" -EventId 0 -EntryType Information
     
     try {
         $AdminAddress = $AutodeployMonitor.AdminAddress
@@ -44,7 +44,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
     }
 
     catch {
-        Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Information -EventId 1
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Information -EventId 1
         throw $Error[0]
         break
     }
@@ -86,7 +86,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
 
                 Write-Verbose "Starting machine provisioning"
                 if (-not($ProvTask.TerminatingError)) {
-                    Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
+                    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
                     
                     Write-Verbose "Creating machine $($NewAdAccount.SuccessfulAccounts.ADAccountName) in machine catalog $($BrokerCatalog.Name)"
                     $NewBrokerMachine = New-BrokerMachine -AdminAddress $AdminAddress -MachineName $NewAdAccount.SuccessfulAccounts.ADAccountSid -CatalogUid $BrokerCatalog.Uid -LoggingId $Logging.Id
@@ -94,18 +94,18 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                     Write-Verbose "Adding machine $($NewBrokerMachine) to delivery group $DesktopGroupName"
                     Add-BrokerMachine -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -DesktopGroup $DesktopGroupName -LoggingId $Logging.Id
 
-                    # Put machine in maintenance mode so SCCM can deploy software. SCCM task sequence will take machine out of maintenance mode.
+                    # Put machine in maintenance mode so the machine doesn't get assigned to a user before SCCM can deploy software. SCCM task sequence will take machine out of maintenance mode.
 					# TODO: Add pre and post deployment tasks to the config file. Could be things such as putting the newly created machine in maintenance mode
 					#       or running a script in the VM.
-                    Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true
+                    #Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true
 
                     # Power on machine because Citrix won't power it on after we put it in maintenance mode.
-                    New-BrokerHostingPowerAction -AdminAddress $AdminAddress -MachineName $NewBrokerMachine.MachineName -Action TurnOn
+                    #New-BrokerHostingPowerAction -AdminAddress $AdminAddress -MachineName $NewBrokerMachine.MachineName -Action TurnOn
                 }
             } 
             
             catch {
-                Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message $Message -EntryType Error -EventId 1
+                Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message $Message -EntryType Error -EventId 1
                 Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $false
                 break
             }
@@ -113,7 +113,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             finally {
                 if (-not($Error)) {
                     Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $true
-                    Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message "Successfully created VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and added it to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 3
+                    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Successfully created VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and added it to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 3
                 }
 
                 if ($IdentityPool.Lock) {
@@ -129,6 +129,6 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
 		
     } else {
         $Message = "No machines needed for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'`n`nAvailable machines: $($UnassignedMachines.Count)`nRequired available machines: $($AutodeployMonitor.MinAvailableMachines)`n`nAvailable machine names:`n$($UnassignedMachines.DNSName | Format-List | Out-String)"
-        Write-EventLog -LogName 'Citrix Powershell Autodeploy' -Source Scripts -Message $Message -EventId 4 -EntryType Information
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message $Message -EventId 4 -EntryType Information
     }
 }

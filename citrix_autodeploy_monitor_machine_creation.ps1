@@ -1,4 +1,4 @@
-$Event = Get-EventLog -LogName 'Citrix Powershell Autodeploy' -Newest 1 -InstanceId 3
+$Event = Get-EventLog -LogName 'Citrix Autodeploy' -Newest 1 -InstanceId 3
 $Body = $Event.Message
 $From = 'CitrixAutodeploy@example.com'
 $To = @('citrixadmin1@example.com', 'citrixadmin2@example.com')
