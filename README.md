@@ -32,7 +32,7 @@ The setup script performs the following:
 
 
 #### Configuration
-You will need to configure which machine catalogs and delivery groups you want to monitor in the file `citrix_autodeploy_config.json`. The example config file that's included contains the following:
+You will need to configure which machine catalogs and delivery groups you want to monitor in the file [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json). The example config file that's included contains the following:
 ````{
     "AutodeployMonitors" : {
         "AutodeployMonitor": [
@@ -57,12 +57,12 @@ You will need to configure which machine catalogs and delivery groups you want t
 |AdminAddress         | Delivery controller FQDN
 |BrokerCatalog        | Machine catalog name
 |DesktopGroupName     | Delivery group name
-|MinAvailableMachines | How many machines you want to available at all times
+|MinAvailableMachines | How many machines you want to be available at all times
 
 MinAvailableMachines works by checking how many **unassigned** machines there are in the delivery group. It then subtracts that number from MinAvailableMachines to determine how many machines it must create to satisfy the configured MinAvailableMachines.
 
 #### Email alerts
-For email alerts to function you must configure the included ``citrix_autodeploy_monitor_error.ps1`` and ``citrix_autodeploy_monitor_machine_creation.ps1`` scripts. You may also need to allow the machine running Citrix Autodeploy to relay email through SMTP server.
+For email alerts to function you must configure the included [`citrix_autodeploy_monitor_error.ps1`](citrix_autodeploy_monitor_error.ps1) and [`citrix_autodeploy_monitor_machine_creation.ps1`](citrix_autodeploy_monitor_machine_creation.ps1) scripts. You may also need to allow the machine running Citrix Autodeploy to relay email through SMTP server.
 
 #### Pre and post deployment tasks
 When I get time I will be adding a feature that will allow running arbitrary scripts or code before and after a machine is created.
