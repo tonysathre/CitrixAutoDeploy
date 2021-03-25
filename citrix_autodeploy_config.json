@@ -1,0 +1,18 @@
+{
+	"AutodeployMonitors" : {
+		"AutodeployMonitor": [
+            {
+                "AdminAddress" : "ddc1.example.com",
+				"BrokerCatalog" : "Example Machine Catalog",
+                "DesktopGroupName" : "Example Delivery Group",
+                "MinAvailableMachines" : 5
+            },
+			{
+                "AdminAddress" : "ddc2.example.com",
+				"BrokerCatalog" : "Example Machine Catalog",
+                "DesktopGroupName" : "Example Delivery Group",
+                "MinAvailableMachines" : 1
+            }
+	]
+	}
+}
