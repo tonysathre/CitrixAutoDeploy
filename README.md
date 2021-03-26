@@ -56,7 +56,7 @@ You will need to configure which machine catalogs and delivery groups you want t
                 "PostTask" : ""
             }
         ]
-	}
+    }
 }
 ````
 |Attribute|Description|
