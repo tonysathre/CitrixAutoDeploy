@@ -41,7 +41,7 @@ You will need to configure which machine catalogs and delivery groups you want t
 		"AutodeployMonitor": [
             {
                 "AdminAddress" : "ddc1.example.com",
-				"BrokerCatalog" : "Example Machine Catalog",
+                "BrokerCatalog" : "Example Machine Catalog",
                 "DesktopGroupName" : "Example Delivery Group",
                 "MinAvailableMachines" : 5,
                 "PreTask" : ".\\pre-task\\pre-task-example.ps1",
@@ -49,7 +49,7 @@ You will need to configure which machine catalogs and delivery groups you want t
             },
 			{
                 "AdminAddress" : "ddc2.example.com",
-				"BrokerCatalog" : "Example Machine Catalog",
+                "BrokerCatalog" : "Example Machine Catalog",
                 "DesktopGroupName" : "Example Delivery Group",
                 "MinAvailableMachines" : 1,
                 "PreTask" : "",
