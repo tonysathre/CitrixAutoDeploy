@@ -7,5 +7,5 @@ $SmtpServer = 'smtp.example.com'
 Send-MailMessage -From $From -To $To -Subject $Subject -Body $Body -SmtpServer $SmtpServer
 
 # Disable scheduled task if error occurs
-Get-ScheduledTask -TaskName 'Citrix Autodeploy Monitor' | Stop-ScheduledTask
-Disable-ScheduledTask -TaskName 'Citrix Autodeploy Monitor'
+#Get-ScheduledTask -TaskName 'Citrix Autodeploy Monitor' | Stop-ScheduledTask
+#Disable-ScheduledTask -TaskName 'Citrix Autodeploy Monitor'
