@@ -1,5 +1,5 @@
 # Citrix Autodeploy for MCS
-Monitors Citrix MCS delivery groups and automatically creates machines based on the number of machines you want always available to be assigned to users
+Monitors Citrix MCS delivery groups and automatically creates machines based on the number of machines you want always available to be assigned to users. The main goal of this is to eliminate the need to manually monitor your delivery groups and manually spin up machines when there aren't any left to be assigned.
 
 ## Prerequisites
 #### General
