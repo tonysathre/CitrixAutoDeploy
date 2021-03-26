@@ -38,7 +38,7 @@ You will need to configure which machine catalogs and delivery groups you want t
 ````
 {
 	"AutodeployMonitors" : {
-		"AutodeployMonitor": [
+        "AutodeployMonitor": [
             {
                 "AdminAddress" : "ddc1.example.com",
                 "BrokerCatalog" : "Example Machine Catalog",
@@ -55,7 +55,7 @@ You will need to configure which machine catalogs and delivery groups you want t
                 "PreTask" : "",
                 "PostTask" : ""
             }
-	]
+        ]
 	}
 }
 ````
