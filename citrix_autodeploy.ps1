@@ -1,13 +1,4 @@
-﻿param (
-    [switch]$Verbose
-)
-
-if ($Verbose) {
-    $VerbosePreference = 'Continue'
-    $PSDefaultParameterValues['*:Verbose'] = $true
-}
-
-Add-PSSnapin Citrix.*
+﻿Add-PSSnapin Citrix.*
 
 function Import-ConfigFile {
     try {
@@ -20,7 +11,6 @@ function Import-ConfigFile {
         throw $Error[0]
     }
 
-    Write-Verbose 'Successfully loaded config file.'
     return $Config 
 }
 
@@ -41,21 +31,29 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         $DesktopGroupName   = Get-BrokerDesktopGroup -AdminAddress $AdminAddress -Name $AutodeployMonitor.DesktopGroupName -ErrorAction Stop
         $UnassignedMachines = Get-BrokerDesktop -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroupName.Name -IsAssigned $false -ErrorAction Stop
         $MachinesToAdd      = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
+        $PreTask            = $AutodeployMonitor.PreTask
+        $PostTask           = $AutodeployMonitor.PostTask
     }
 
     catch {
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Information -EventId 1
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
         throw $Error[0]
         break
     }
 
     if ($MachinesToAdd -ge 1) {
         while ($MachinesToAdd -ne 0) {
-            try {
-                Write-Verbose "start loop for job '$($DesktopGroupName.Name)'"
-                Write-Verbose "machines to add '$($MachinesToAdd)'"
-                Write-Verbose '## creating new machine ##'
-                
+            try {  
+                if ($PreTask) {
+                    try {
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing pre-task for delivery group $($AutodeployMonitor.DesktopGroupName)" -EventId 5 -EntryType Information
+                        & $PreTask
+                    }
+                    catch {
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Error occured in post-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1    
+                    }
+                }
+
                 $Logging = Start-LogHighLevelOperation -AdminAddress $AdminAddress -Source "Powershell Autodeploy" -StartTime $([datetime]::Now) -Text "Adding 1 Machines to Machine Catalog `'$($BrokerCatalog.Name)`'"
                 $IdentityPool = Get-AcctIdentityPool -AdminAddress $AdminAddress -IdentityPoolName $BrokerCatalog.Name   
                 $IdentityPoolLockedTimeout = 60
@@ -70,9 +68,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                 }
                 
                 Set-AcctIdentityPool -AdminAddress $AdminAddress -AllowUnicode -Domain $IdentityPool.Domain -IdentityPoolName $IdentityPool.IdentityPoolName -LoggingId $Logging.Id
-                Write-Verbose 'Creating AD account'
                 $NewAdAccount = New-AcctADAccount -AdminAddress $AdminAddress -Count 1 -IdentityPoolName $IdentityPool.IdentityPoolName -LoggingId $Logging.Id -ErrorAction Stop
-                Write-Verbose "Successfully created AD account: $($NewAdAccount.SuccessfulAccounts)"
 
                 $ProvScheme = Get-ProvScheme -AdminAddress $AdminAddress -ProvisioningSchemeName $BrokerCatalog.Name
 
@@ -84,28 +80,25 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                     $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
                 }
 
-                Write-Verbose "Starting machine provisioning"
                 if (-not($ProvTask.TerminatingError)) {
                     Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
-                    
-                    Write-Verbose "Creating machine $($NewAdAccount.SuccessfulAccounts.ADAccountName) in machine catalog $($BrokerCatalog.Name)"
                     $NewBrokerMachine = New-BrokerMachine -AdminAddress $AdminAddress -MachineName $NewAdAccount.SuccessfulAccounts.ADAccountSid -CatalogUid $BrokerCatalog.Uid -LoggingId $Logging.Id
-                    
-                    Write-Verbose "Adding machine $($NewBrokerMachine) to delivery group $DesktopGroupName"
                     Add-BrokerMachine -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -DesktopGroup $DesktopGroupName -LoggingId $Logging.Id
-                    
-                    # TODO: Add pre and post deployment tasks to the config file.
-                    # Put machine in maintenance mode so the machine doesn't get assigned to a user before SCCM can deploy software. SCCM task sequence will take machine out 
-                    # of maintenance mode.
-                    #Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true
-
-                    # Power on machine because Citrix won't power it on after we put it in maintenance mode.
-                    #New-BrokerHostingPowerAction -AdminAddress $AdminAddress -MachineName $NewBrokerMachine.MachineName -Action TurnOn
+                }
+               
+                if ($PostTask) {
+                    try {
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing post-task for delivery group $($AutodeployMonitor.DesktopGroupName)" -EventId 5 -EntryType Information
+                        & $PostTask
+                    }
+                    catch {
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Error occured in post-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1    
+                    }
                 }
             } 
             
             catch {
-                Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message $Message -EntryType Error -EventId 1
+                Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
                 Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $false
                 break
             }
@@ -123,10 +116,6 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
 			
             $MachinesToAdd--
         }
-		
-        Write-Verbose "End of job '$($DesktopGroupName.Name)'"
-        Write-Verbose '##-------------------------------------------##'
-		
     } else {
         $Message = "No machines needed for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'`n`nAvailable machines: $($UnassignedMachines.Count)`nRequired available machines: $($AutodeployMonitor.MinAvailableMachines)`n`nAvailable machine names:`n$($UnassignedMachines.DNSName | Format-List | Out-String)"
         Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message $Message -EventId 4 -EntryType Information

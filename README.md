@@ -6,7 +6,8 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 * Windows Server 2012+
 * Powershell 5.1+
 * Citrix (CVAD) Powershell snapins 1912 LTSR
-    _Older versions may work but only 1912 LTSR was tested_
+
+_Older versions may work but only these were tested_
 
 
 #### Active Directory
