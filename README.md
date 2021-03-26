@@ -5,7 +5,9 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 #### General
 * Windows Server 2012+
 * Powershell 5.1+
-* Citrix (CVAD) Powershell snapins
+* Citrix (CVAD) Powershell snapins 1912 LTSR
+    _Older versions may work but only 1912 LTSR was tested_
+
 
 #### Active Directory
 Active Directory service account with permissions to create computer objects in the OU's used by your machine catalogs. See [this](https://support.citrix.com/article/CTX136282) link for details on the required Active Directory permissions.
