@@ -75,3 +75,8 @@ For email alerts to function you must configure the included [`citrix_autodeploy
 
 ### Pre and post deployment tasks
 You can define a script or command-line to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
+
+### Troubleshooting
+If you're getting the following error in the event log, it is because the service account the Citrix Autodeploy scheduled task is running as doesn't have proper permissions on the OU in Active Directory.
+
+````Cannot validate argument on parameter 'ADAccountName'. The number of provided arguments (0) is fewer than the minimum number of allowed arguments (1). Provide more than 1 arguments, and then try the command again.````
