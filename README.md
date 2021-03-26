@@ -3,9 +3,9 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 
 ## Prerequisites
 #### General
-Windows Server 2012+
-Powershell 5.1+
-Citrix (CVAD) Powershell snapins
+* Windows Server 2012+
+* Powershell 5.1+
+* Citrix (CVAD) Powershell snapins
 
 #### Active Directory
 Active Directory service account with permissions to create and delete computer objects. See [this](https://support.citrix.com/article/CTX136282) link for details on the required Active Directory permissions.
