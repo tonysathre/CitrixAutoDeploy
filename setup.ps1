@@ -1,3 +1,9 @@
+try {
+##
+# Prompt for credential to use for the autodeploy scheduled task
+##
+$Credential = Get-Credential -Message 'Scheduled task service account credential'
+
 function New-ScheduledTaskEventTrigger {
     param (
         [string]$EventLog,
@@ -19,24 +25,22 @@ function New-ScheduledTaskEventTrigger {
     return $Trigger
 }
 
-
 ##
 # Create event log
 ##
-if (-not(Get-EventLog -LogName 'Citrix Autodeploy')) {
+'Checking for event log'
+if ((Get-EventLog -List).Log -contains 'Citrix Autodeploy') {
+    'Event log found, continuing'
+} else {
+    'Event log not found. Creating it'
     New-EventLog -LogName 'Citrix Autodeploy' -Source 'Scripts'
+    Limit-EventLog -LogName 'Citrix Autodeploy' -OverflowAction OverwriteAsNeeded -MaximumSize 20480KB
 }
-
-##
-# Prompt for credential to use for the autodeploy scheduled task
-##
-$Credential = Get-Credential -Message 'Scheduled task credential'
 
 
 $AutoDeployTask = @{
     Action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-executionpolicy bypass -noprofile -file $PSScriptRoot\citrix_autodeploy.ps1" -WorkingDirectory $PSScriptRoot
-    Trigger   = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddHours(5) -RepetitionInterval (New-TimeSpan -Hours 1)
-    Principal = New-ScheduledTaskPrincipal -RunLevel Highest -LogonType Password
+    Trigger   = New-ScheduledTaskTrigger -Daily -At 5am
     Settings  = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew
     User      = $Credential.UserName
     Password  = $Credential.GetNetworkCredential().Password
@@ -59,10 +63,12 @@ $AutoDeployMachineCreationTask = @{
     TaskName  = 'Citrix Autodeploy Machine Creation Monitor'
 }
 
-Register-ScheduledTask @AutoDeployTask
-Register-ScheduledTask @AutoDeployErrorMonitorTask
-Register-ScheduledTask @AutoDeployMachineCreationTask
-
+'Creating scheduled tasks'
+$Task = Register-ScheduledTask @AutoDeployTask
+$Task.Triggers.Repetition.Interval = 'PT1H'
+$Task | Set-ScheduledTask -User $Credential.UserName -Password $Credential.GetNetworkCredential().Password
+Register-ScheduledTask @AutoDeployErrorMonitorTask -Force
+Register-ScheduledTask @AutoDeployMachineCreationTask -Force
 
 ##
 # Add 'logon as a batch job' privilege
@@ -310,5 +316,12 @@ namespace MyLsaWrapper
     }
 }
 '@
+"Assigning user $($Credential.UserName) 'logon as a batch service' privilege"
+[MyLsaWrapper.LsaWrapperCaller]::AddPrivileges($Credential.UserName, "SeBatchLogonRight") | Out-Null
 
-[MyLsaWrapper.LsaWrapperCaller]::AddPrivileges($Credential.UserName, "SeBatchLogonRight")
+'Setup complete'
+
+}
+catch {
+    throw $Error[0]
+}
