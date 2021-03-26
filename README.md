@@ -37,7 +37,7 @@ The scheduled task settings can be modified in Task Scheduler
 You will need to configure which machine catalogs and delivery groups you want to monitor in the file [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json). The example config file that's included contains the following:
 ````
 {
-	"AutodeployMonitors" : {
+    "AutodeployMonitors" : {
         "AutodeployMonitor": [
             {
                 "AdminAddress" : "ddc1.example.com",
