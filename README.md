@@ -8,7 +8,7 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 * Citrix (CVAD) Powershell snapins
 
 #### Active Directory
-Active Directory service account with permissions to create and delete computer objects. See [this](https://support.citrix.com/article/CTX136282) link for details on the required Active Directory permissions.
+Active Directory service account with permissions to create computer objects in the OU's used by your machine catalogs. See [this](https://support.citrix.com/article/CTX136282) link for details on the required Active Directory permissions.
 
 #### Citrix Studio
 The Active Directory service account will need at least the 'Machine Catalog Administrator' role, and possibly the 'Delivery Group Administrator' role. This still needs to be tested to find the least privileges required.
