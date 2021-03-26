@@ -59,6 +59,7 @@ You will need to configure which machine catalogs and delivery groups you want t
     }
 }
 ````
+
 |Attribute|Description|
 |--- | ---|
 |AdminAddress         | Delivery controller FQDN
@@ -76,7 +77,10 @@ For email alerts to function you must configure the included [`citrix_autodeploy
 ### Pre and post deployment tasks
 You can define a script or command-line to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
 
-### Troubleshooting
-If you're getting the following error in the event log, it is because the service account the Citrix Autodeploy scheduled task is running as doesn't have proper permissions on the OU in Active Directory.
-
-````Cannot validate argument on parameter 'ADAccountName'. The number of provided arguments (0) is fewer than the minimum number of allowed arguments (1). Provide more than 1 arguments, and then try the command again.````
+### Troubleshooting and Common Errors
+|Event log error|Solution|
+|-- | --|
+|`Cannot validate argument on parameter 'ADAccountName'. The number of provided arguments (0) is fewer than the minimum number of allowed arguments (1). Provide more than 1 arguments, and then try the command again.`|Ensure the service account has the proper permissions on the OU.
+`The term 'Get-BrokerCatalog' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.`|Ensure the Powershell snapins are installed. These can be installed standalone from the CVAD ISO or with Citrix Studio.
+|`Failed to connect to back-end server 'ddc1.example.com' on port 80 using binding WSHttp. The server may be off-line or may not be running the appropriate service`|Double-check the AdminAddress defined in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json).
+|`Insufficient administrative privilege`|Ensure the service account has been added to the 'Machine Catalog Administrator' and 'Delivery Group Administrator' roles in Citrix Studio.
