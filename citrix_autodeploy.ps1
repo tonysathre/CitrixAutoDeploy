@@ -11,8 +11,8 @@ Add-PSSnapin Citrix.*
 
 function Import-ConfigFile {
     try {
-        if (Test-Path (Join-Path $PSScriptRoot citrix_Autodeploy_config.json)) {
-            $Config = Get-Content (Join-Path $PSScriptRoot citrix_Autodeploy_config.json) | ConvertFrom-Json
+        if (Test-Path (Join-Path $PSScriptRoot citrix_autodeploy_config.json)) {
+            $Config = Get-Content (Join-Path $PSScriptRoot citrix_autodeploy_config.json) | ConvertFrom-Json
         }
     }
     catch {
@@ -25,8 +25,8 @@ function Import-ConfigFile {
 }
 
 # Check if our custom event log exists
-if (-not(Get-EventLog -LogName 'Citrix Autodeploy')) {
-    throw 'Event log not found.'    
+if ((Get-EventLog -List).Log -notcontains 'Citrix Autodeploy') {
+    throw 'Event log not found.'
 }
 
 Write-Verbose 'Loading config ...'
@@ -36,11 +36,11 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
     Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Autodeploy job started: $(($AutodeployMonitor | Format-List | Out-String))" -EventId 0 -EntryType Information
     
     try {
-        $AdminAddress = $AutodeployMonitor.AdminAddress
-        $BrokerCatalog = Get-BrokerCatalog -AdminAddress $AdminAddress -Name $AutodeployMonitor.BrokerCatalog -ErrorAction Stop
-        $DesktopGroupName = Get-BrokerDesktopGroup -AdminAddress $AdminAddress -Name $AutodeployMonitor.DesktopGroupName -ErrorAction Stop
+        $AdminAddress       = $AutodeployMonitor.AdminAddress
+        $BrokerCatalog      = Get-BrokerCatalog -AdminAddress $AdminAddress -Name $AutodeployMonitor.BrokerCatalog -ErrorAction Stop
+        $DesktopGroupName   = Get-BrokerDesktopGroup -AdminAddress $AdminAddress -Name $AutodeployMonitor.DesktopGroupName -ErrorAction Stop
         $UnassignedMachines = Get-BrokerDesktop -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroupName.Name -IsAssigned $false -ErrorAction Stop
-        $MachinesToAdd = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
+        $MachinesToAdd      = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
     }
 
     catch {
@@ -79,7 +79,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                 $NewVMProvTask = New-ProvVM -AdminAddress $AdminAddress -ADAccountName $NewAdAccount.SuccessfulAccounts -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -RunAsynchronously -LoggingId $Logging.Id
                 $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
                 $ProvTaskSleep = 15
-				while ($ProvTask.Active -eq $true) {
+                while ($ProvTask.Active -eq $true) {
                     Start-Sleep -Seconds $ProvTaskSleep
                     $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
                 }
@@ -93,10 +93,10 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                     
                     Write-Verbose "Adding machine $($NewBrokerMachine) to delivery group $DesktopGroupName"
                     Add-BrokerMachine -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -DesktopGroup $DesktopGroupName -LoggingId $Logging.Id
-
-                    # Put machine in maintenance mode so the machine doesn't get assigned to a user before SCCM can deploy software. SCCM task sequence will take machine out of maintenance mode.
-					# TODO: Add pre and post deployment tasks to the config file. Could be things such as putting the newly created machine in maintenance mode
-					#       or running a script in the VM.
+                    
+                    # TODO: Add pre and post deployment tasks to the config file.
+                    # Put machine in maintenance mode so the machine doesn't get assigned to a user before SCCM can deploy software. SCCM task sequence will take machine out 
+                    # of maintenance mode.
                     #Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true
 
                     # Power on machine because Citrix won't power it on after we put it in maintenance mode.
