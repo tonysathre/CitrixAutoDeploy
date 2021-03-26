@@ -46,7 +46,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             try {  
                 if ($PreTask) {
                     try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing pre-task for delivery group $($AutodeployMonitor.DesktopGroupName)" -EventId 5 -EntryType Information
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing pre-task for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 5 -EntryType Information
                         & $PreTask
                     }
                     catch {
@@ -72,6 +72,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
 
                 $ProvScheme = Get-ProvScheme -AdminAddress $AdminAddress -ProvisioningSchemeName $BrokerCatalog.Name
 
+                Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
                 $NewVMProvTask = New-ProvVM -AdminAddress $AdminAddress -ADAccountName $NewAdAccount.SuccessfulAccounts -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -RunAsynchronously -LoggingId $Logging.Id
                 $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
                 $ProvTaskSleep = 15
@@ -81,14 +82,13 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                 }
 
                 if (-not($ProvTask.TerminatingError)) {
-                    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
                     $NewBrokerMachine = New-BrokerMachine -AdminAddress $AdminAddress -MachineName $NewAdAccount.SuccessfulAccounts.ADAccountSid -CatalogUid $BrokerCatalog.Uid -LoggingId $Logging.Id
                     Add-BrokerMachine -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -DesktopGroup $DesktopGroupName -LoggingId $Logging.Id
                 }
                
                 if ($PostTask) {
                     try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing post-task for delivery group $($AutodeployMonitor.DesktopGroupName)" -EventId 5 -EntryType Information
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing post-task for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 5 -EntryType Information
                         & $PostTask
                     }
                     catch {
