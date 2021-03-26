@@ -9,13 +9,11 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 
 _Older versions may work but only these were tested_
 
-
 #### Active Directory
 Active Directory service account with permissions to create computer objects in the OU's used by your machine catalogs. See [this](https://support.citrix.com/article/CTX136282) link for details on the required Active Directory permissions.
 
 #### Citrix Studio
-The Active Directory service account will need at least the 'Machine Catalog Administrator' role, and possibly the 'Delivery Group Administrator' role. This still needs to be tested to find the least privileges required.
-
+The Active Directory service account will need the 'Machine Catalog Administrator' and 'Delivery Group Administrator' roles.
 
 ## Setup
 _I would not recommend running this directly on one of your delivery controllers. I run this on a management jump box._
@@ -33,26 +31,32 @@ The setup script performs the following:
   * Citrix Autodeploy Machine Creation Monitor
 * Delegate the SeBatchLogonRight (Logon as a batch job) privilege to the Active Directory service account on the local machine
 
+The scheduled task settings can be modified in Task Scheduler
 
 #### Configuration
 You will need to configure which machine catalogs and delivery groups you want to monitor in the file [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json). The example config file that's included contains the following:
-````{
-    "AutodeployMonitors" : {
-        "AutodeployMonitor": [
+````
+{
+	"AutodeployMonitors" : {
+		"AutodeployMonitor": [
             {
                 "AdminAddress" : "ddc1.example.com",
-                "BrokerCatalog" : "Example Machine Catalog",
+				"BrokerCatalog" : "Example Machine Catalog",
                 "DesktopGroupName" : "Example Delivery Group",
-                "MinAvailableMachines" : 5
+                "MinAvailableMachines" : 5,
+                "PreTask" : ".\\pre-task\\pre-task-example.ps1",
+                "PostTask" : ".\\post-task\\enable-maintenance-mode.ps1"
             },
-            {
+			{
                 "AdminAddress" : "ddc2.example.com",
-                "BrokerCatalog" : "Example Machine Catalog",
+				"BrokerCatalog" : "Example Machine Catalog",
                 "DesktopGroupName" : "Example Delivery Group",
-                "MinAvailableMachines" : 1
+                "MinAvailableMachines" : 1,
+                "PreTask" : "",
+                "PostTask" : ""
             }
-        ]
-    }
+	]
+	}
 }
 ````
 |Attribute|Description|
@@ -61,6 +65,8 @@ You will need to configure which machine catalogs and delivery groups you want t
 |BrokerCatalog        | Machine catalog name
 |DesktopGroupName     | Delivery group name
 |MinAvailableMachines | How many machines you want to be available at all times
+|PreTask              | Script or command-line to run before creating a new machine
+|PostTask             | Script or command-line to run after creating a new machine
 
 MinAvailableMachines works by checking how many **unassigned** machines there are in the delivery group. It then subtracts that number from MinAvailableMachines to determine how many machines it must create to satisfy the configured MinAvailableMachines.
 
@@ -68,40 +74,4 @@ MinAvailableMachines works by checking how many **unassigned** machines there ar
 For email alerts to function you must configure the included [`citrix_autodeploy_monitor_error.ps1`](citrix_autodeploy_monitor_error.ps1) and [`citrix_autodeploy_monitor_machine_creation.ps1`](citrix_autodeploy_monitor_machine_creation.ps1) scripts. You may also need to allow the machine running Citrix Autodeploy to relay email through your SMTP server.
 
 #### Pre and post deployment tasks
-When I get time I will be adding a feature that will allow running scripts or code before and after a machine is created. In the meantime this can be accomplished by modifying the [`citrix_autodeploy.ps1`](citrix_autodeploy.ps1) file directly. I have in that script some post-tasks that put the machine in maintenance mode and then power it on, but they're commented out as those are specific to our environment.
-
-This will probably look something like one of the following but I haven't decided what the best way to handle this is (open to suggestions but am leaning towards the first one):
-
-````{
-    "AutodeployMonitors" : {
-        "AutodeployMonitor": [
-            {
-                "AdminAddress" : "ddc1.example.com",
-                "BrokerCatalog" : "Example Machine Catalog",
-                "DesktopGroupName" : "Example Delivery Group",
-                "MinAvailableMachines" : 5
-                "PreTask" : .\pre-task\script.ps1
-                "PostTask : .\post-task\script.ps1
-            }
-        ]
-    }
-}
-````
-
-or
-
-````{
-    "AutodeployMonitors" : {
-        "AutodeployMonitor": [
-            {
-                "AdminAddress" : "ddc1.example.com",
-                "BrokerCatalog" : "Example Machine Catalog",
-                "DesktopGroupName" : "Example Delivery Group",
-                "MinAvailableMachines" : 5
-                "PreTask" : {ScriptBlock}
-                "PostTask : {ScriptBlock}
-            }
-        ]
-    }
-}
-````
+You can define a script or command-line to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
