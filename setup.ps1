@@ -64,7 +64,7 @@ $AutoDeployMachineCreationTask = @{
 }
 
 'Creating scheduled tasks'
-$Task = Register-ScheduledTask @AutoDeployTask
+$Task = Register-ScheduledTask @AutoDeployTask -Force
 $Task.Triggers.Repetition.Interval = 'PT1H'
 $Task | Set-ScheduledTask -User $Credential.UserName -Password $Credential.GetNetworkCredential().Password
 Register-ScheduledTask @AutoDeployErrorMonitorTask -Force
