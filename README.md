@@ -93,8 +93,6 @@ You can get additional email alerts by creating scheduled tasks that trigger on 
 ### Pre and post deployment tasks
 You can define a script to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
 
-_Do not use the included pre-task and post-task folders to store your scripts. Store them outside the Citrix Autodeploy repo so you can version control them separately._
-
 ### Troubleshooting and Common Errors
 |Event log error|Solution|
 |-- | --|
