@@ -2,7 +2,7 @@
     Add-PSSnapin Citrix.*
 }
 catch {
-    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Citrix Powershell snapins not installed." -EntryType Error -EventId 1
+    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Citrix Powershell snapins not installed." -EntryType Error -EventId 1
     Exit 1  
 }
 
@@ -13,7 +13,7 @@ function Import-ConfigFile {
         }
     }
     catch {
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
         throw $Error[0]
     }
 
@@ -29,7 +29,7 @@ Write-Verbose 'Loading config ...'
 $Config = Import-ConfigFile
 
 foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
-    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Autodeploy job started: $(($AutodeployMonitor | Format-List | Out-String))" -EventId 0 -EntryType Information
+    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Autodeploy job started: $(($AutodeployMonitor | Format-List | Out-String))" -EventId 0 -EntryType Information
     
     try {
         $AdminAddress       = $AutodeployMonitor.AdminAddress
@@ -42,7 +42,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
     }
 
     catch {
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
         throw $Error[0]
         break
     }
@@ -52,11 +52,12 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             try {  
                 if ($PreTask) {
                     try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing pre-task for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 5 -EntryType Information
-                        & $PreTask
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Executing pre-task `'$($AutodeployMonitor.PreTask)`' for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 5 -EntryType Information
+                        $PreTaskOutput = & $PreTask
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Pre-task output`r`n`r`n$PreTaskOutput" -EventId 7 -EntryType Information
                     }
                     catch {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Error occured in post-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1    
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in pre-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
                     }
                 }
 
@@ -78,7 +79,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
 
                 $ProvScheme = Get-ProvScheme -AdminAddress $AdminAddress -ProvisioningSchemeName $BrokerCatalog.Name
 
-                Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
+                Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
                 $NewVMProvTask = New-ProvVM -AdminAddress $AdminAddress -ADAccountName $NewAdAccount.SuccessfulAccounts -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -RunAsynchronously -LoggingId $Logging.Id
                 $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
                 $ProvTaskSleep = 15
@@ -94,17 +95,18 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                
                 if ($PostTask) {
                     try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Executing post-task for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 5 -EntryType Information
-                        & $PostTask
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Executing post-task `'$($AutodeployMonitor.PostTask)`' for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 6 -EntryType Information
+                        $PostTaskOutput = & $PostTask
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Post-task output`r`n`r`n$PostTaskOutput" -EventId 8 -EntryType Information
                     }
                     catch {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Error occured in post-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1    
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in post-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
                     }
                 }
             } 
             
             catch {
-                Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
+                Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
                 Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $false
                 break
             }
@@ -112,7 +114,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             finally {
                 if (-not($Error)) {
                     Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $true
-                    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Successfully created VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and added it to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 3
+                    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Successfully created VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and added it to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 3
                 }
 
                 if ($IdentityPool.Lock) {
@@ -124,6 +126,6 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         }
     } else {
         $Message = "No machines needed for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'`n`nAvailable machines: $($UnassignedMachines.Count)`nRequired available machines: $($AutodeployMonitor.MinAvailableMachines)`n`nAvailable machine names:`n$($UnassignedMachines.DNSName | Format-List | Out-String)"
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message $Message -EventId 4 -EntryType Information
+        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message $Message -EventId 4 -EntryType Information
     }
 }
