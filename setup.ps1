@@ -7,7 +7,7 @@ try {
     $Credential = Get-Credential -Message 'Scheduled task service account credential'
     
     if (Test-Path "$PSScriptRoot\citrix_autodeploy_config.json.example") {
-        Rename-Item -Path "$PSScriptRoot\citrix_autodeploy_config.json.example" -NewName "$PSScriptRoot\citrix_autodeploy_config.json"
+        Copy-Item -Path "$PSScriptRoot\citrix_autodeploy_config.json.example" -Destination  "$PSScriptRoot\citrix_autodeploy_config.json"
     }
 
     function New-ScheduledTaskEventTrigger {
