@@ -1,3 +1,5 @@
+#Requires -RunAsAdministrator
+
 try {
 ##
 # Prompt for credential to use for the autodeploy scheduled task
