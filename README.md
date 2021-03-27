@@ -32,7 +32,7 @@ The setup script performs the following:
   * Citrix Autodeploy Machine Creation Monitor
 * Delegate the SeBatchLogonRight (Logon as a batch job) privilege to the Active Directory service account on the local machine
 
-The scheduled task settings can be modified in Task Scheduler
+By default the task is set to start every day at 5:00 AM, and run every hour after that, but the settings can be modified in Task Scheduler. You will need to start the scheduled task manually the first time, or wait until 5:00 AM for it's normal start time.
 
 ### Configuration
 You will need to configure which machine catalogs and delivery groups you want to monitor in the file [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json). The example config file that's included contains the following:
