@@ -6,8 +6,11 @@ try {
     ##
     $Credential = Get-Credential -Message 'Service account credential'
     
-    if (Test-Path "$PSScriptRoot\citrix_autodeploy_config.json.example") {
+    if ((Test-Path "$PSScriptRoot\citrix_autodeploy_config.json.example") -and (-not(Test-Path "$PSScriptRoot\citrix_autodeploy_config.json"))) {
+        "Config file citrix_autodeploy_config.json not found. Copying it from $PSScriptRoot\citrix_autodeploy_config.json.example"
         Copy-Item -Path "$PSScriptRoot\citrix_autodeploy_config.json.example" -Destination  "$PSScriptRoot\citrix_autodeploy_config.json"
+    } else {
+        "Config file already exists"
     }
 
     function New-ScheduledTaskEventTrigger {
