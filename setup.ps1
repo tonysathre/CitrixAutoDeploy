@@ -4,7 +4,7 @@ try {
     ##
     # Prompt for credential to use for the autodeploy scheduled task
     ##
-    $Credential = Get-Credential -Message 'Scheduled task service account credential'
+    $Credential = Get-Credential -Message 'Service account credential'
     
     if (Test-Path "$PSScriptRoot\citrix_autodeploy_config.json.example") {
         Copy-Item -Path "$PSScriptRoot\citrix_autodeploy_config.json.example" -Destination  "$PSScriptRoot\citrix_autodeploy_config.json"
@@ -39,7 +39,7 @@ try {
         'Event log found, continuing'
     } else {
         'Event log not found, creating it'
-        New-EventLog -LogName 'Citrix Autodeploy' -Source 'Scripts'
+        New-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy'
         Limit-EventLog -LogName 'Citrix Autodeploy' -OverflowAction OverwriteAsNeeded -MaximumSize 20480KB
     }
     
@@ -55,7 +55,7 @@ try {
     
     $AutoDeployErrorMonitorTask = @{
         Action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-executionpolicy bypass -noprofile -file `"$PSScriptRoot\citrix_autodeploy_monitor_error.ps1`"" -WorkingDirectory "$PSScriptRoot"
-        Trigger   = New-ScheduledTaskEventTrigger -EventLog 'Citrix Autodeploy' -EventId 1 -EventSource 'Scripts'
+        Trigger   = New-ScheduledTaskEventTrigger -EventLog 'Citrix Autodeploy' -EventId 1 -EventSource 'Citrix Autodeploy'
         Principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\SYSTEM' -RunLevel Highest -LogonType ServiceAccount
         Settings  = New-ScheduledTaskSettingsSet -MultipleInstances Queue
         TaskName  = 'Citrix Autodeploy Error Monitor'
@@ -63,7 +63,7 @@ try {
     
     $AutoDeployMachineCreationTask = @{
         Action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-executionpolicy bypass -noprofile -file `"$PSScriptRoot\citrix_autodeploy_monitor_machine_creation.ps1`"" -WorkingDirectory "$PSScriptRoot"
-        Trigger   = New-ScheduledTaskEventTrigger -EventLog 'Citrix Autodeploy' -EventId 3 -EventSource 'Scripts'
+        Trigger   = New-ScheduledTaskEventTrigger -EventLog 'Citrix Autodeploy' -EventId 3 -EventSource 'Citrix Autodeploy'
         Principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\SYSTEM' -RunLevel Highest -LogonType ServiceAccount
         Settings  = New-ScheduledTaskSettingsSet -MultipleInstances Queue
         TaskName  = 'Citrix Autodeploy Machine Creation Monitor'
