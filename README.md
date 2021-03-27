@@ -48,7 +48,7 @@ You will need to configure which machine catalogs and delivery groups you want t
                 "PreTask" : ".\\pre-task\\pre-task-example.ps1",
                 "PostTask" : ".\\post-task\\enable-maintenance-mode.ps1"
             },
-			{
+            {
                 "AdminAddress" : "ddc2.example.com",
                 "BrokerCatalog" : "Example Machine Catalog",
                 "DesktopGroupName" : "Example Delivery Group",
