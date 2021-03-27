@@ -36,7 +36,7 @@ By default the task is set to start every day at 5:00 AM, and run every hour aft
 
 ### Configuration
 You will need to configure which machine catalogs and delivery groups you want to monitor in the file [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example). The example config file that's included contains the following:
-```yaml
+```json
 {
     "AutodeployMonitors" : {
         "AutodeployMonitor": [
