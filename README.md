@@ -17,6 +17,7 @@ The Active Directory service account will need the 'Machine Catalog Administrato
 
 ## Setup
 _I would not recommend running this directly on one of your delivery controllers. I run this on a management jump box._
+
 Start Powershell as Administrator then run the following commands:
     
     git clone https://github.com/tonysathre/CitrixAutoDeploy.git
