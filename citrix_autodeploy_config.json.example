@@ -6,7 +6,7 @@
                 "BrokerCatalog" : "Example Machine Catalog",
                 "DesktopGroupName" : "Example Delivery Group",
                 "MinAvailableMachines" : 5,
-                "PreTask" : "C:\\Scripts\\pre-task-example.ps1",
+                "PreTask" : "C:\\Scripts\\pre-task.ps1",
                 "PostTask" : "C:\\Scripts\\post-task.ps1"
             },
             {
