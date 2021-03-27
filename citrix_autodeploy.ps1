@@ -1,4 +1,10 @@
-﻿Add-PSSnapin Citrix.*
+﻿try {
+    Add-PSSnapin Citrix.*
+}
+catch {
+    Write-EventLog -LogName 'Citrix Autodeploy' -Source Scripts -Message "Citrix Powershell snapins not installed." -EntryType Error -EventId 1
+    Exit 1  
+}
 
 function Import-ConfigFile {
     try {
