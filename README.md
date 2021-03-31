@@ -101,7 +101,7 @@ You can get additional email alerts by creating scheduled tasks that trigger on 
 ### Pre and post deployment tasks
 You can define a script to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
 
-Here is an example post-task that puts the newly created machine into maintnenace mode, and then powers it on:
+Here is an example post-task that puts the newly created machine into maintenance mode, and then powers it on:
 
 ```powershell
 Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true                   
