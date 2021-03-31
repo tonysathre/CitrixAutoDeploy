@@ -1,11 +1,8 @@
+$Json = Get-Content $PSScriptRoot\citrix_autodeploy_config_email.json | ConvertFrom-Json
 $Event = Get-EventLog -LogName 'Citrix Autodeploy' -Newest 1 -InstanceId 1
 $Body = $Event.Message
-$From = 'CitrixAutodeploy@example.com'
-$To = @('citrixadmin1@example.com', 'citrixadmin2@example.com')
+$From = $Json.From
+$To = $Json.To
 $Subject = 'Citrix Autodeploy Error Occurred'
-$SmtpServer = 'smtp.example.com'
+$SmtpServer = $Json.SmtpServer
 Send-MailMessage -From $From -To $To -Subject $Subject -Body $Body -SmtpServer $SmtpServer
-
-# Disable scheduled task if error occurs
-#Get-ScheduledTask -TaskName 'Citrix Autodeploy Monitor' | Stop-ScheduledTask
-#Disable-ScheduledTask -TaskName 'Citrix Autodeploy Monitor'
