@@ -90,9 +90,9 @@ You can get additional email alerts by creating scheduled tasks that trigger on 
 |-- | --|
 |0|<pre>Autodeploy job started: <br><br>AdminAddress         : ddc1.example.com <br>BrokerCatalog        : Example Machine Catalog <br>DesktopGroupName     : Example Delivery Group <br>MinAvailableMachines : 1 <br>PreTask              :  <br>PostTask             : C:\\Scripts\\post-task.ps1</pre>|
 |1|All **errors** report as event ID 1 to simplify alerting|
-|2|<pre>Creating VM _VMName_ in catalog 'Example Machine Catalog' and adding to delivery group 'Example Delivery Group'</pre>|
-|3|<pre>Successfully created VM _VMName_ in catalog 'Example Machine Catalog' and added it to delivery group 'Example Delivery Group'</pre>|
-|4|<pre>No machines needed for desktop group 'Example Delivery Group'<br>Available machines: 1<br>Required available machines: 1<br><br>Available machine names:<br>_VMName.example.com_<br></pre>|
+|2|```Creating VM VMName in catalog 'Example Machine Catalog' and adding to delivery group 'Example Delivery Group'```|
+|3|```Successfully created VM VMName in catalog 'Example Machine Catalog' and added it to delivery group 'Example Delivery Group'```|
+|4|<pre>No machines needed for desktop group 'Example Delivery Group'<br>Available machines: 1<br>Required available machines: 1<br><br>Available machine names:<br>VMName.example.com<br></pre>|
 |5|<pre>Executing pre-task 'C:\Scripts\pre-task.ps1' for desktop group Example Delivery Group</pre>|
 |6|<pre>Executing post-task 'C:\Scripts\post-task.ps1' for desktop group Example Delivery Group</pre>|
 |7|<pre>Pre-task output<br><br>_Some script output_</pre>|
