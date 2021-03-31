@@ -73,7 +73,15 @@ You will need to configure which machine catalogs and delivery groups you want t
 MinAvailableMachines works by checking how many **unassigned** machines there are in the delivery group. It then subtracts that number from MinAvailableMachines to determine how many machines it must create to satisfy the configured MinAvailableMachines.
 
 ### Email alerts
-For email alerts to function you must configure the included [`citrix_autodeploy_monitor_error.ps1`](citrix_autodeploy_monitor_error.ps1) and [`citrix_autodeploy_monitor_machine_creation.ps1`](citrix_autodeploy_monitor_machine_creation.ps1) scripts. You may also need to allow the machine running Citrix Autodeploy to relay email through your SMTP server.
+For email alerts to function you must configure a[`citrix_autodeploy_config_email.json`](citrix_autodeploy_config_email.json.example). [`setup.ps1`](setup.ps1) will create this for you if it does not exist. You may also need to allow the machine running Citrix Autodeploy to relay email through your SMTP server.
+
+```json
+{
+    "SmtpServer" : "smtp.example.com",
+    "To" : ["email1@example.com", "email2@example.com"],
+    "From" : "CitrixAutodeploy@example.com"
+}
+```
 
 You can get additional email alerts by creating scheduled tasks that trigger on the different events described below.
 
