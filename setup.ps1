@@ -10,7 +10,14 @@ try {
         "Config file citrix_autodeploy_config.json not found. Copying it from $PSScriptRoot\citrix_autodeploy_config.json.example"
         Copy-Item -Path "$PSScriptRoot\citrix_autodeploy_config.json.example" -Destination  "$PSScriptRoot\citrix_autodeploy_config.json"
     } else {
-        "Config file already exists"
+        "Config file already exists. Skipping."
+    }
+
+    if ((Test-Path "$PSScriptRoot\citrix_autodeploy_config_email.json.example") -and (-not(Test-Path "$PSScriptRoot\citrix_autodeploy_config_email.json"))) {
+        "Config file citrix_autodeploy_config_email.json not found. Copying it from $PSScriptRoot\citrix_autodeploy_config_email.json.example"
+        Copy-Item -Path "$PSScriptRoot\citrix_autodeploy_config_email.json.example" -Destination  "$PSScriptRoot\citrix_autodeploy_config_email.json"
+    } else {
+        "Email config file already exists. Skipping."
     }
 
     function New-ScheduledTaskEventTrigger {
