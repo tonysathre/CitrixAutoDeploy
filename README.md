@@ -86,7 +86,7 @@ For email alerts to function you must configure a[`citrix_autodeploy_config_emai
 You can get additional email alerts by creating scheduled tasks that trigger on the different event ID's described below.
 
 ### Events and logging
-|Event ID|Details|
+|Event ID|Details|
 |-- | --|
 |0|<pre>Autodeploy job started: <br><br>AdminAddress         : ddc1.example.com <br>BrokerCatalog        : Example Machine Catalog <br>DesktopGroupName     : Example Delivery Group <br>MinAvailableMachines : 1 <br>PreTask              :  <br>PostTask             : C:\\Scripts\\post-task.ps1</pre>|
 |1|All **errors** report as event ID 1 to simplify alerting|
