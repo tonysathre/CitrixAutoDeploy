@@ -35,7 +35,7 @@ The setup script performs the following:
 By default the task is set to start every day at 5:00 AM, and run every hour after that, but the settings can be modified in Task Scheduler. For testing you can run the Citrix Autodeploy scheduled task manually.
 
 ## Configuration
-You will need to configure which machine catalogs and delivery groups you want to monitor in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example). The included example config file  contains the following:
+You will need to configure which machine catalogs and delivery groups you want to monitor in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example). [`setup.ps1`](setup.ps1) will create this for you if it does not exist. The included example config file contains the following:
 ```json
 {
     "AutodeployMonitors" : {
