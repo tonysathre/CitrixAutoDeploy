@@ -35,7 +35,7 @@ The setup script performs the following:
 By default the task is set to start every day at 5:00 AM, and run every hour after that, but the settings can be modified in Task Scheduler. For testing you can run the Citrix Autodeploy scheduled task manually.
 
 ### Configuration
-You will need to configure which machine catalogs and delivery groups you want to monitor in the file [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example). The example config file that's included contains the following:
+You will need to configure which machine catalogs and delivery groups you want to monitor in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example). The included example config file  contains the following:
 ```json
 {
     "AutodeployMonitors" : {
@@ -83,18 +83,18 @@ For email alerts to function you must configure a[`citrix_autodeploy_config_emai
 }
 ```
 
-You can get additional email alerts by creating scheduled tasks that trigger on the different events described below.
+You can get additional email alerts by creating scheduled tasks that trigger on the different event ID's described below.
 
 ### Events and logging
 |Event ID|Details|
 |-- | --|
-|0|<pre>Autodeploy job started: <br><br>AdminAddress         : ddc1.example.com <br>BrokerCatalog        : test-catalog <br>DesktopGroupName     : Test Delivery Group <br>MinAvailableMachines : 1 <br>PreTask              :  <br>PostTask             : .\post-task\script.ps1</pre>|
+|0|<pre>Autodeploy job started: <br><br>AdminAddress         : ddc1.example.com <br>BrokerCatalog        : Example Machine Catalog <br>DesktopGroupName     : Example Delivery Group <br>MinAvailableMachines : 1 <br>PreTask              :  <br>PostTask             : C:\\Scripts\\post-task.ps1</pre>|
 |1|All **errors** report as event ID 1 to simplify alerting|
-|2|<pre>Creating VM _VMName_ in catalog 'test-catalog' and adding to delivery group 'Test Delivery Group'</pre>|
-|3|<pre>Successfully created VM _VMName_ in catalog 'test-catalog' and added it to delivery group 'Test Delivery Group'</pre>|
-|4|<pre>No machines needed for desktop group 'Test Delivery Group'<br>Available machines: 1<br>Required available machines: 1<br><br>Available machine names:<br>_VMName.example.com_<br></pre>|
-|5|<pre>Executing pre-task '.\pre-task\script.ps1' for desktop group Test Delivery Group</pre>|
-|6|<pre>Executing post-task '.\post-task\script.ps1' for desktop group Test Delivery Group</pre>|
+|2|<pre>Creating VM _VMName_ in catalog 'Example Machine Catalog' and adding to delivery group 'Example Delivery Group'</pre>|
+|3|<pre>Successfully created VM _VMName_ in catalog 'Example Machine Catalog' and added it to delivery group 'Example Delivery Group'</pre>|
+|4|<pre>No machines needed for desktop group 'Example Delivery Group'<br>Available machines: 1<br>Required available machines: 1<br><br>Available machine names:<br>_VMName.example.com_<br></pre>|
+|5|<pre>Executing pre-task 'C:\Scripts\pre-task.ps1' for desktop group Example Delivery Group</pre>|
+|6|<pre>Executing post-task 'C:\Scripts\post-task.ps1' for desktop group Example Delivery Group</pre>|
 |7|<pre>Pre-task output<br><br>_Some script output_</pre>|
 |8|<pre>Post-task output<br><br>_Some script output_</pre>|
 
