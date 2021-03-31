@@ -1,0 +1,5 @@
+{
+    "SmtpServer" : "smtp.example.com",
+    "To" : ["email1@example.com", "email2@example.com"],
+    "From" : "CitrixAutodeploy@example.com"
+}
