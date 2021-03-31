@@ -83,7 +83,7 @@ For email alerts to function you must configure a[`citrix_autodeploy_config_emai
 }
 ```
 
-You can get additional email alerts by creating scheduled tasks that trigger on the different event ID's described below.
+The two included monitor scripts will send emails for event ID's 1 and 3. You can get additional email alerts by creating scheduled tasks that trigger on the different event ID's described below.
 
 ### Events and logging
 |Event ID|Details|
