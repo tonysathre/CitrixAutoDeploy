@@ -101,6 +101,30 @@ You can get additional email alerts by creating scheduled tasks that trigger on 
 ### Pre and post deployment tasks
 You can define a script to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
 
+Here is an example post-task that puts the newly created machine into maintnenace mode, and then powers it on:
+
+```powershell
+Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true                   
+New-BrokerHostingPowerAction -AdminAddress $AdminAddress -MachineName $NewBrokerMachine.MachineName -Action TurnOn
+```
+The following variables can be used in pre and post-task scripts:
+
+|Variable|Data Type|Availability|
+|-- | --| --|
+|$AdminAddress|System.String|Pre and Post|
+|$BrokerCatalog|Citrix.Broker.Admin.SDK.Catalog|Pre and Post|
+|$DesktopGroupName|Citrix.Broker.Admin.SDK.DesktopGroup|Pre and Post|
+|$UnassignedMachines|Citrix.Broker.Admin.SDK.Desktop|Pre and Post|
+|$MachinesToAdd|System.Int32|Pre and Post|
+|$PreTask|System.String|Pre and Post|
+|$PostTask|System.String|Pre and Post|
+|$PreTaskOutput|Depends on task output|Post|
+|$IdentityPool|Citrix.ADIdentity.Sdk.IdentityPool|Post|
+|$NewAdAccount|Citrix.ADIdentity.Sdk.AccountOperationDetailedSummary|Post|
+|$ProvScheme|Citrix.MachineCreation.Sdk.ProvisioningScheme|Post|
+|$NewVMProvTask|System.Guid|Post|
+|$NewBrokerMachine|Citrix.Broker.Admin.Sdk.Machine|Post|
+
 ### Troubleshooting and Common Errors
 |Event log error|Solution|
 |-- | --|
