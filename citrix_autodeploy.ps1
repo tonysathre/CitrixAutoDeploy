@@ -95,7 +95,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                
                 if ($PostTask) {
                     try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Executing post-task `'$($AutodeployMonitor.PostTask)`' for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 6 -EntryType Information
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Executing post-task `'$($AutodeployMonitor.PostTask)`' for machine `'$($NewBrokerMachine.MachineName)`' desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 6 -EntryType Information
                         $PostTaskOutput = & $PostTask
                         Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Post-task output`r`n`r`n$PostTaskOutput" -EventId 8 -EntryType Information
                     }
