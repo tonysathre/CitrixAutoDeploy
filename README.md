@@ -99,7 +99,7 @@ The two included monitor scripts will send emails for event ID's 1 and 3. You ca
 |8|<pre>Post-task output<br><br>_Some script output_</pre>|
 
 ### Pre and post deployment tasks
-You can define a script to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB.
+You can define a script to run in the [`citrix_autodeploy_config.json`](citrix_autodeploy_config.json.example) before each machine is created, and after each machine is created. This can be useful for things such as putting a machine in maintenance mode or registering it with your CMDB. A couple examples are included in [`post-task-examples`](post-task-examples) folder.
 
 Here is an example post-task that puts the newly created machine into maintenance mode, and then powers it on:
 
