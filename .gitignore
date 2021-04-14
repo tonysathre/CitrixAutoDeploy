@@ -1,4 +1,4 @@
 citrix_autodeploy_config.json
 citrix_autodeploy_config_email.json
-post-task\*
-pre-task\*
+post-task/*
+pre-task/*
