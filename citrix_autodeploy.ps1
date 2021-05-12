@@ -57,7 +57,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                         Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Pre-task output`r`n`r`n$PreTaskOutput" -EventId 7 -EntryType Information
                     }
                     catch {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in pre-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in pre-task for desktop group $($AutodeployMonitor.DesktopGroupName)`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
                     }
                 }
 
@@ -100,7 +100,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                         Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Post-task output`r`n`r`n$PostTaskOutput" -EventId 8 -EntryType Information
                     }
                     catch {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in post-task`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
+                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in post-task for desktop group $($AutodeployMonitor.DesktopGroupName)`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
                     }
                 }
             } 
