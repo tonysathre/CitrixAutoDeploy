@@ -72,6 +72,34 @@ You will need to configure which machine catalogs and delivery groups you want t
 
 MinAvailableMachines works by checking how many **unassigned** machines there are in the delivery group. It then subtracts that number from MinAvailableMachines to determine how many machines it must create to satisfy the configured MinAvailableMachines.
 
+### Adding custom properties
+
+You can add any custom properties to each object that you may need to use a post-task script. For example, if you need to add machines created in a certain catalog added to specific AD groups, you could add a custom property called `ADGroups` to the object:
+
+```json
+{
+    "AdminAddress" : "ddc2.example.com",
+    "BrokerCatalog" : "Example Machine Catalog",
+    "DesktopGroupName" : "Example Delivery Group",
+    "MinAvailableMachines" : 1,
+    "PreTask" : "",
+    "PostTask" : "",
+    "ADGroups" : ["SomeGroup", "SomeOtherGroup"]
+}
+```
+
+Then in your post-task script, use this to add the machine to that group:
+
+```powershell
+if (![string]::IsNullOrEmpty($AutoDeployMonitor.ADGroups)) {
+    $ADObject = Get-AdComputer $NewBrokerMachine.MachineName.Split('\')[1]
+    
+    foreach ($ADGroup in $AutoDeployMonitor.ADGroups) {
+        Add-ADGroupMember -Identity $ADGroup -Members $ADObject
+    }
+}
+```
+
 ### Email alerts
 For email alerts to function you must configure a[`citrix_autodeploy_config_email.json`](citrix_autodeploy_config_email.json.example). [`setup.ps1`](setup.ps1) will create this for you if it does not exist. You may also need to allow the machine running Citrix Autodeploy to relay email through your SMTP server.
 
