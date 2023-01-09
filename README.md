@@ -139,6 +139,7 @@ The following variables can be used in pre and post-task scripts:
 
 |Variable|Data Type|Availability|
 |-- | --| --|
+|$AutoDeployMonitor|PSCustomObject|Pre and Post|
 |$AdminAddress|System.String|Pre and Post|
 |$BrokerCatalog|Citrix.Broker.Admin.SDK.Catalog|Pre and Post|
 |$DesktopGroupName|Citrix.Broker.Admin.SDK.DesktopGroup|Pre and Post|
@@ -152,7 +153,6 @@ The following variables can be used in pre and post-task scripts:
 |$ProvScheme|Citrix.MachineCreation.Sdk.ProvisioningScheme|Post|
 |$NewVMProvTask|System.Guid|Post|
 |$NewBrokerMachine|Citrix.Broker.Admin.Sdk.Machine|Post|
-|$AutoDeployMonitor|PSCustomObject|Pre and Post|
 
 ### Troubleshooting and Common Errors
 |Event log error|Solution|
