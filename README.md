@@ -7,7 +7,7 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 * Powershell 5.1+
 * Citrix (CVAD) Powershell snapins 1912 LTSR
 
-_Older versions may work but only these were tested_
+> Older versions may work but only these were tested
 
 ### Active Directory
 Active Directory service account with permissions to create computer objects in the OU's used by your machine catalogs. See [this](https://support.citrix.com/article/CTX136282) link for details on the required Active Directory permissions.
@@ -16,7 +16,7 @@ Active Directory service account with permissions to create computer objects in 
 The Active Directory service account will need the 'Machine Catalog Administrator' and 'Delivery Group Administrator' roles.
 
 ## Setup
-_I would not recommend running this directly on one of your delivery controllers. I run this on a management jump box._
+> I would not recommend running this directly on one of your delivery controllers. I run this on a management jump box.
 
 Start Powershell as Administrator then run the following commands:
     
@@ -88,7 +88,7 @@ You can add any custom properties to each object that you may need to use a post
 }
 ```
 
-Then in your post-task script, use this to add the machine to those groups:
+Then in your post-task script, you can reference your custom property using the `$AutoDeployMonitor` variable:
 
 ```powershell
 if (![string]::IsNullOrEmpty($AutoDeployMonitor.ADGroups)) {
@@ -152,6 +152,7 @@ The following variables can be used in pre and post-task scripts:
 |$ProvScheme|Citrix.MachineCreation.Sdk.ProvisioningScheme|Post|
 |$NewVMProvTask|System.Guid|Post|
 |$NewBrokerMachine|Citrix.Broker.Admin.Sdk.Machine|Post|
+|$AutoDeployMonitor|PSCustomObject|Pre and Post|
 
 ### Troubleshooting and Common Errors
 |Event log error|Solution|
