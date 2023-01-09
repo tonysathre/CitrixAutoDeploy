@@ -88,7 +88,7 @@ You can add any custom properties to each object that you may need to use a post
 }
 ```
 
-Then in your post-task script, use this to add the machine to that group:
+Then in your post-task script, use this to add the machine to those groups:
 
 ```powershell
 if (![string]::IsNullOrEmpty($AutoDeployMonitor.ADGroups)) {
