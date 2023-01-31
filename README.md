@@ -74,7 +74,7 @@ MinAvailableMachines works by checking how many **unassigned** machines there ar
 
 ### Adding custom properties
 
-You can add any custom properties to each object that you may need to use a post-task script. For example, if you need to add machines created in a certain catalog added to specific AD groups, you could add a custom property called `ADGroups` to the object:
+You can add any custom properties to each object that you may need to use in a post-task script. For example, if you need machines created in a certain catalog added to specific AD groups, you could add a custom property called `ADGroups` to the object:
 
 ```json
 {
