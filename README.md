@@ -6,6 +6,7 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 * Windows Server 2012+
 * Powershell 5.1+
 * Citrix (CVAD) Powershell snapins 1912 LTSR
+* PSTeams Powershell module
 
 > Older versions may work but only these were tested
 
@@ -111,7 +112,49 @@ For email alerts to function you must configure a[`citrix_autodeploy_config_emai
 }
 ```
 
-The two included monitor scripts will send emails for event ID's 1 and 3. You can get additional email alerts by creating scheduled tasks that trigger on the different event ID's described below.
+### MS Teams alerts
+You can also send alerts to an Microsoft Teams channel.
+
+1. [Create an incoming webhook](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook?tabs=dotnet) in Teams
+2. Install the [PSTeams](https://github.com/EvotecIT/PSTeams) Powershell module on the machine running Citrix AutoDeploy
+3. Put the following code in [citrix_autodeploy_monitor_machine_creation.ps1](citrix_autodeploy_monitor_machine_creation.ps1)
+
+```powershell
+Import-Module PSTeams
+$Regex          = "'(.*?)'"
+$Matches        = $Event.Message | Select-String -Pattern $Regex -AllMatches | Foreach-Object { $_.Matches }
+$MachineCatalog = $Matches[0].Value.Trim("'")
+$DeliveryGroup  = $Matches[1].Value.Trim("'")
+$VM             = $(($Event.Message -split ' ')[3])
+
+$Uri   = '<YOUR WEBHOOK URL HERE>'
+$Color = 'Green'
+$Fact1 = New-TeamsFact -Name 'VM Name' -Value $VM
+$Fact2 = New-TeamsFact -Name 'Machine Catalog' -Value $MachineCatalog
+$Fact3 = New-TeamsFact -Name 'Delivery Group' -Value $DeliveryGroup
+
+$TeamsSection = @{
+    ActivityDetails = $Fact1, $Fact2, $Fact3   
+}
+
+$Sections = New-TeamsSection @TeamsSection
+
+$TeamsMessageParams = @{
+    Uri          = $Uri
+    MessageTitle = 'Citrix AutoDeploy'
+    MessageText  = 'Machine Created'
+    Color        = $Color
+    Sections     = $Sections
+}
+
+Send-TeamsMessage @TeamsMessageParams
+```
+
+Here's an example MS Teams notification:
+
+![MS Teams](./teams.png)
+
+The two included monitor scripts will send alerts for event ID's 1 and 3 by default. You can get additional alerts by creating scheduled tasks that trigger on the different event ID's described below.
 
 ### Events and logging
 |Event ID|Details|
