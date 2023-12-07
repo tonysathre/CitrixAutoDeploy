@@ -8,6 +8,8 @@ Monitors Citrix MCS delivery groups and automatically creates machines based on 
 * Citrix (CVAD) Powershell snapins 1912 LTSR
 * PSTeams Powershell module
 
+> PSTeams module only required if you want to send notifications to an MS Teams channel
+
 > Older versions may work but only these were tested
 
 ### Active Directory
