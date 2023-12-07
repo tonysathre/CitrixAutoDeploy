@@ -139,7 +139,7 @@ $TeamsSection = @{
 
 $Sections = New-TeamsSection @TeamsSection
 
-$TeamsMessageParams = @{
+$TeamsMessage = @{
     Uri          = $Uri
     MessageTitle = 'Citrix AutoDeploy'
     MessageText  = 'Machine Created'
@@ -147,7 +147,7 @@ $TeamsMessageParams = @{
     Sections     = $Sections
 }
 
-Send-TeamsMessage @TeamsMessageParams
+Send-TeamsMessage @TeamsMessage
 ```
 
 Here's an example MS Teams notification:
