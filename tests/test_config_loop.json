@@ -1,0 +1,14 @@
+{
+    "AutodeployMonitors": {
+        "AutodeployMonitor": [
+            {
+                "AdminAddress": "test-admin-address",
+                "BrokerCatalog": "TestCatalog",
+                "DesktopGroupName": "TestGroup",
+                "MinAvailableMachines": 2,
+                "PreTask": ".\\test_pre_task.ps1",
+                "PostTask": ".\\test_post_task.ps1"
+            }
+        ]
+    }
+}
