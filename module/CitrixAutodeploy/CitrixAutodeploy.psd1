@@ -66,17 +66,17 @@ Copyright = '(c) 2024 Tony Sathre. All rights reserved.'
 # FormatsToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @('.\functions\Add-Machine.ps1',
-               '.\functions\Get-Config.ps1',
-               '.\functions\Initialize-Environment.ps1',
-               '.\functions\Invoke-CtxAdTask.ps1',
-               '.\functions\New-CitrixVM.ps1',
-               '.\functions\Wait-ForIdentityPoolUnlock.ps1',
+NestedModules = @('.\functions\Add-Machine.ps1', 
+               '.\functions\Get-Config.ps1', 
+               '.\functions\Initialize-Environment.ps1', 
+               '.\functions\Invoke-CtxAdTask.ps1', 
+               '.\functions\New-CitrixVM.ps1', 
+               '.\functions\Wait-ForIdentityPoolUnlock.ps1', 
                '.\functions\Write-CitrixAutoDeployLog.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Add-Machine', 'Get-Config', 'Initialize-Environment',
-               'Invoke-CtxAdTask', 'New-CitrixVM', 'Wait-ForIdentityPoolUnlock',
+FunctionsToExport = 'Add-Machine', 'Get-Config', 'Initialize-Environment', 
+               'Invoke-CtxAdTask', 'New-CitrixVM', 'Wait-ForIdentityPoolUnlock', 
                'Write-CitrixAutoDeployLog'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
