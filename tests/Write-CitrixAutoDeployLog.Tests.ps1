@@ -1,4 +1,8 @@
 Describe 'Write-CitrixAutoDeployLog' {
+    BeforeAll {
+        Import-Module ${PSScriptRoot}\..\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -WarningAction SilentlyContinue
+    }
+
     It 'Should write error message to error stream in CI environment' {
         $env:CI = $true
         $Message = "Test error message written to error stream"
