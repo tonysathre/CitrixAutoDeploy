@@ -3,11 +3,11 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $false)]
-    [ValidateSet('Diagnostic', 'Detailed', 'Normal', 'Minimal', 'None')]
-    [string]$Output = 'Normal',
+    [string]$Path = "${PSScriptRoot}\tests",
 
     [Parameter(Mandatory = $false)]
-    [string]$Path = "${PSScriptRoot}\tests"
+    [ValidateSet('Diagnostic', 'Detailed', 'Normal', 'Minimal', 'None')]
+    [string]$Output = 'Normal'
 )
 
 Import-Module ${PSScriptRoot}\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -WarningAction SilentlyContinue
