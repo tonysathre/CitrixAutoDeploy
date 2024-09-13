@@ -1,23 +1,28 @@
 Describe 'Invoke-CtxAdTask' {
+    BeforeAll {
+        Import-Module ${PSScriptRoot}\..\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -WarningAction SilentlyContinue
+    }
+
     $TestCases = @(
         @{ Name = 'PreTask';  Type = 'Pre'  },
         @{ Name = 'PostTask'; Type = 'Post' }
     )
-
-    BeforeAll {
-        Import-Module "${PSScriptRoot}\..\module\CitrixAutodeploy\functions\Invoke-CtxAdTask.ps1"
-    }
 
     It 'Should execute <_.Name>' -TestCases $TestCases {
         param($Name, $Type)
 
         $ExpectedOutput = "A test ${Name} script was executed"
         $Task           = "${PSScriptRoot}\test_${Name}.ps1"
-        $MachineName    = 'test-machine-name'
+
+        $Params = @{
+            Task    = $Task
+            Context = 'test-machine-name-for-context'
+            Type    = $Type
+        }
 
         Set-Content -Path $Task -Value "'${ExpectedOutput}'"
 
-        $ActualOutput = Invoke-CtxAdTask -Task $Task -MachineName $MachineName -Type $Type
+        $ActualOutput = Invoke-CtxAdTask @Params
         $ActualOutput | Should -Be $ExpectedOutput
     }
 
