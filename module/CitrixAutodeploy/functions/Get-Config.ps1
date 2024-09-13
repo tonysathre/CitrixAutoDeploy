@@ -1,7 +1,8 @@
 function Get-Config {
     [CmdletBinding()]
     param(
-        [string]$FilePath
+        [Parameter(Mandatory)]
+        [System.IO.FileInfo]$FilePath
     )
 
     try {
