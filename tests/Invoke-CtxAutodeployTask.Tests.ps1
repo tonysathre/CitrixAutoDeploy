@@ -1,4 +1,4 @@
-Describe 'Invoke-CtxAdTask' {
+Describe 'Invoke-CtxAutodeployTask' {
     BeforeAll {
         Import-Module ${PSScriptRoot}\..\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -WarningAction SilentlyContinue
     }
@@ -22,7 +22,7 @@ Describe 'Invoke-CtxAdTask' {
 
         Set-Content -Path $Task -Value "'${ExpectedOutput}'"
 
-        $ActualOutput = Invoke-CtxAdTask @Params
+        $ActualOutput = Invoke-CtxAutodeployTask @Params
         $ActualOutput | Should -Be $ExpectedOutput
     }
 
@@ -33,7 +33,7 @@ Describe 'Invoke-CtxAdTask' {
 
     #     Set-Content -Path $PreTask -Value "'${ExpectedOutput}'"
 
-    #     $ActualOutput = Invoke-CtxAdTask -PreTask $PreTask -MachineName $MachineName -Type Pre
+    #     $ActualOutput = Invoke-CtxAutodeployTask -PreTask $PreTask -MachineName $MachineName -Type Pre
     #     $ActualOutput | Should -Be $ExpectedOutput
     # }
 
@@ -44,7 +44,7 @@ Describe 'Invoke-CtxAdTask' {
 
     #     Set-Content -Path $PreTask -Value "'${ExpectedOutput}'"
 
-    #     $ActualOutput = Invoke-CtxAdTask -Task $PostTask -MachineName $MachineName -Type Post
+    #     $ActualOutput = Invoke-CtxAutodeployTask -Task $PostTask -MachineName $MachineName -Type Post
     #     $ActualOutput | Should -Be $ExpectedOutput
     # }
 

@@ -1,4 +1,4 @@
-Describe 'Write-CitrixAutoDeployLog' {
+Describe 'Write-CtxAutodeployLog' {
     BeforeAll {
         Import-Module ${PSScriptRoot}\..\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -WarningAction SilentlyContinue
     }
@@ -9,7 +9,7 @@ Describe 'Write-CitrixAutoDeployLog' {
         $EventId = 1
         $EntryType = [System.Diagnostics.EventLogEntryType]::Error
 
-        { Write-CitrixAutoDeployLog -Message $Message -EventId $EventId -EntryType $EntryType -ErrorVariable Errors -ErrorAction SilentlyContinue
+        { Write-CtxAutodeployLog -Message $Message -EventId $EventId -EntryType $EntryType -ErrorVariable Errors -ErrorAction SilentlyContinue
             $Errors.Count | Should Be 1
             $Errors[0].Exception.Message | Should Be (
                 $Message
@@ -23,7 +23,7 @@ Describe 'Write-CitrixAutoDeployLog' {
         $EventId = 2
         $EntryType = [System.Diagnostics.EventLogEntryType]::Information
 
-        { Write-CitrixAutoDeployLog -Message $Message -EventId $EventId -EntryType $EntryType } | Should -Not -Throw
+        { Write-CtxAutodeployLog -Message $Message -EventId $EventId -EntryType $EntryType } | Should -Not -Throw
     }
 
     It 'Should write to Windows event log in non-CI environment' {
@@ -32,6 +32,6 @@ Describe 'Write-CitrixAutoDeployLog' {
         $EventId = 3
         $EntryType = [System.Diagnostics.EventLogEntryType]::Information
 
-        { Write-CitrixAutoDeployLog -Message $Message -EventId $EventId -EntryType $EntryType } | Should -Not -Throw
+        { Write-CtxAutodeployLog -Message $Message -EventId $EventId -EntryType $EntryType } | Should -Not -Throw
     }
 }

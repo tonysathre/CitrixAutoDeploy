@@ -1,6 +1,6 @@
-Describe 'New-CitrixVM' {
+Describe 'New-CtxAutodeployVM' {
     BeforeEach {
-        . "${PSScriptRoot}\..\module\CitrixAutodeploy\functions\New-CitrixVM.ps1"
+        . "${PSScriptRoot}\..\module\CitrixAutodeploy\functions\New-CtxAutodeployVM.ps1"
     }
 
     It 'Should create a new Citrix VM' {
@@ -8,7 +8,7 @@ Describe 'New-CitrixVM' {
         Mock Get-ProvTask              { return [PSCustomObject]@{ Active = $false; TerminatingError = $false } }
         Mock New-BrokerMachine         { return [PSCustomObject]@{ MachineName = 'MockMachine' } }
         Mock Add-BrokerMachine         { return $null }
-        Mock Write-CitrixAutoDeployLog
+        Mock Write-CtxAutodeployLog
 
         $Params = @{
             AdminAddress  = 'TestAdminAddress'
@@ -19,18 +19,18 @@ Describe 'New-CitrixVM' {
             Logging       = [PSCustomObject]@{ Id = [guid]::NewGuid() }
         }
 
-        { New-CitrixVM @Params } | Should -Not -Throw
+        { New-CtxAutodeployVM @Params } | Should -Not -Throw
 
         Should -Invoke New-ProvVM                -Exactly 1 -Scope It
         Should -Invoke Get-ProvTask              -Exactly 1 -Scope It
         Should -Invoke New-BrokerMachine         -Exactly 1 -Scope It
         Should -Invoke Add-BrokerMachine         -Exactly 1 -Scope It
-        Should -Invoke Write-CitrixAutoDeployLog -Exactly 2 -Scope It
+        Should -Invoke Write-CtxAutodeployLog -Exactly 2 -Scope It
     }
 
     It 'Should throw error if New-ProvVM fails' {
         Mock New-ProvVM -MockWith { throw "Provisioning VM failed" }
-        Mock Write-CitrixAutoDeployLog
+        Mock Write-CtxAutodeployLog
         Mock New-BrokerMachine
         Mock Add-BrokerMachine
 
@@ -43,9 +43,9 @@ Describe 'New-CitrixVM' {
             Logging       = [PSCustomObject]@{ Id = [guid]::NewGuid() }
         }
 
-        { New-CitrixVM @Params } | Should -Throw
+        { New-CtxAutodeployVM @Params } | Should -Throw
 
-        Should -Invoke Write-CitrixAutoDeployLog -Exactly 1 -Scope It
+        Should -Invoke Write-CtxAutodeployLog -Exactly 1 -Scope It
         Should -Invoke New-BrokerMachine -Exactly 0 -Scope It
         Should -Invoke Add-BrokerMachine -Exactly 0 -Scope It
     }
@@ -62,7 +62,7 @@ Describe 'New-CitrixVM' {
 
         Mock Add-BrokerMachine { throw "Machine addition failed" }
 
-        { New-CitrixVM @Params } | Should -Throw
+        { New-CtxAutodeployVM @Params } | Should -Throw
     }
 
     It 'Should throw error if provisioning task fails' {
@@ -70,7 +70,7 @@ Describe 'New-CitrixVM' {
         Mock Get-ProvTask              { return [PSCustomObject]@{ Active = $false; TerminatingError = $true } }
         Mock New-BrokerMachine         { return [PSCustomObject]@{ MachineName = 'MockMachine' } }
         Mock Add-BrokerMachine         { return $null }
-        Mock Write-CitrixAutoDeployLog
+        Mock Write-CtxAutodeployLog
 
         $Params = @{
             AdminAddress  = 'TestAdminAddress'
@@ -81,9 +81,9 @@ Describe 'New-CitrixVM' {
             Logging       = [PSCustomObject]@{ Id = [guid]::NewGuid() }
         }
 
-        { New-CitrixVM @Params } | Should -Throw
+        { New-CtxAutodeployVM @Params } | Should -Throw
 
-        Should -Invoke Write-CitrixAutoDeployLog -Exactly 2 -Scope It
+        Should -Invoke Write-CtxAutodeployLog -Exactly 2 -Scope It
         Should -Invoke New-BrokerMachine         -Exactly 0 -Scope It
         Should -Invoke Add-BrokerMachine         -Exactly 0 -Scope It
     }
@@ -92,7 +92,7 @@ Describe 'New-CitrixVM' {
         Mock New-ProvVM { return [guid]::NewGuid() }
         Mock Get-ProvTask { return [PSCustomObject]@{ Active = $false; TerminatingError = $false } }
         Mock New-BrokerMachine { throw "Creating Broker Machine failed" }
-        Mock Write-CitrixAutoDeployLog
+        Mock Write-CtxAutodeployLog
         Mock Add-BrokerMachine
 
         $Params = @{
@@ -104,11 +104,11 @@ Describe 'New-CitrixVM' {
             Logging       = [PSCustomObject]@{ Id = [guid]::NewGuid() }
         }
 
-        { New-CitrixVM @Params } | Should -Throw
+        { New-CtxAutodeployVM @Params } | Should -Throw
 
         Should -Invoke New-ProvVM                -Exactly 1 -Scope It
         Should -Invoke Get-ProvTask              -Exactly 1 -Scope It
-        Should -Invoke Write-CitrixAutoDeployLog -Exactly 2 -Scope It
+        Should -Invoke Write-CtxAutodeployLog -Exactly 2 -Scope It
         Should -Invoke New-BrokerMachine         -Exactly 1 -Scope It
         Should -Invoke Add-BrokerMachine         -Exactly 0 -Scope It
     }
@@ -125,7 +125,7 @@ Describe 'New-CitrixVM' {
         }
 
         Mock Start-Sleep { return $ProvTask.Active = $false }
-        Mock Write-CitrixAutoDeployLog
+        Mock Write-CtxAutodeployLog
         Mock New-BrokerMachine { return [PSCustomObject]@{ MachineName = 'TestMachine' } }
         Mock Add-BrokerMachine { return $null }
 
@@ -138,7 +138,7 @@ Describe 'New-CitrixVM' {
             Logging       = [PSCustomObject]@{ Id = [guid]::NewGuid() }
         }
 
-        { New-CitrixVM @Params } | Should -Not -Throw
+        { New-CtxAutodeployVM @Params } | Should -Not -Throw
 
         Should -Invoke Start-Sleep  -Exactly 1 -Scope It
         Should -Invoke Get-ProvTask -Exactly 2 -Scope It

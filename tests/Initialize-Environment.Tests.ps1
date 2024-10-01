@@ -6,17 +6,16 @@ Describe 'Initialize-Environment' {
     Context 'When running in non-CI environment' {
         BeforeEach {
             $env:CI = $false
+            Mock Get-EventLog { return @([PSCustomObject]@{ Log = 'Application' }, [PSCustomObject]@{ Log = 'System' }) }
         }
 
-        It 'Should throw error if event log not found' {
-            Mock Write-CitrixAutoDeployLog { }
-            Mock Get-EventLog { throw "Event log not found" }
+        It "Should throw error if 'Citrix Autodeploy' event log not found" {
+            #Mock Write-CtxAutodeployLog { }
+            #Mock Get-EventLog { throw "Event log not found" }
 
-            { Initialize-Environment }
-            #Mock Get-EventLog { return @([PSCustomObject]@{ Log = 'Citrix Autodeploy' }, [PSCustomObject]@{ Log = 'System' }) }
-
-            { Initialize-Environment }
+            { Initialize-Environment } | Should -Throw
             Should -Invoke Get-EventLog -Exactly 1
+
         }
 
         It 'Should not throw error if event log found' {
@@ -37,7 +36,7 @@ Describe 'Initialize-Environment' {
 
             { Initialize-Environment } | Should -Not -Throw
             $Modules | ForEach-Object { Get-Module -Name $_ } | Should -Not -BeNullOrEmpty
-        } -Skip
+        }
     }
 
     Context 'When running in CI environment' {
@@ -74,9 +73,9 @@ Describe 'Initialize-Environment' {
 
     # It 'Should log an error and rethrow if module import fails' {
     #     Mock Import-Module { throw "Module import failed" }
-    #     Mock Write-CitrixAutoDeployLog
+    #     Mock Write-CtxAutodeployLog
     #     { Initialize-Environment } | Should -Throw
-    #     Assert-MockCalled Write-CitrixAutoDeployLog -Exactly 1 -Scope It
+    #     Assert-MockCalled Write-CtxAutodeployLog -Exactly 1 -Scope It
     # } -Skip
 
     # It 'Should add Citrix PowerShell modules' {
