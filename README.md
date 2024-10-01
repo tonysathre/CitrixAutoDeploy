@@ -22,7 +22,7 @@ The Active Directory service account will need the 'Machine Catalog Administrato
 > I would not recommend running this directly on one of your delivery controllers. I run this on a management jump box.
 
 Start Powershell as Administrator then run the following commands:
-    
+
     git clone https://github.com/tonysathre/CitrixAutoDeploy.git
     cd CitrixAutoDeploy
     .\setup.ps1
@@ -96,7 +96,7 @@ Then in your post-task script, you can reference your custom property using the 
 ```powershell
 if (![string]::IsNullOrEmpty($AutoDeployMonitor.ADGroups)) {
     $ADObject = Get-AdComputer $NewBrokerMachine.MachineName.Split('\')[1]
-    
+
     foreach ($ADGroup in $AutoDeployMonitor.ADGroups) {
         Add-ADGroupMember -Identity $ADGroup -Members $ADObject
     }
@@ -136,7 +136,7 @@ $Fact2 = New-TeamsFact -Name 'Machine Catalog' -Value $MachineCatalog
 $Fact3 = New-TeamsFact -Name 'Delivery Group' -Value $DeliveryGroup
 
 $TeamsSection = @{
-    ActivityDetails = $Fact1, $Fact2, $Fact3   
+    ActivityDetails = $Fact1, $Fact2, $Fact3
 }
 
 $Sections = New-TeamsSection @TeamsSection
@@ -154,7 +154,7 @@ Send-TeamsMessage @TeamsMessage
 
 Here's an example MS Teams notification:
 
-![MS Teams](./teams.png)
+![MS Teams](./assets/teams.png)
 
 The two included monitor scripts will send alerts for event ID's 1 and 3 by default. You can get additional alerts by creating scheduled tasks that trigger on the different event ID's described below.
 
@@ -177,7 +177,7 @@ You can define a script to run in the [`citrix_autodeploy_config.json`](citrix_a
 Here is an example post-task that puts the newly created machine into maintenance mode, and then powers it on:
 
 ```powershell
-Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true                   
+Set-BrokerMachineMaintenanceMode -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -MaintenanceMode $true
 New-BrokerHostingPowerAction -AdminAddress $AdminAddress -MachineName $NewBrokerMachine.MachineName -Action TurnOn
 ```
 The following variables can be used in pre and post-task scripts:
