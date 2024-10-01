@@ -1,4 +1,4 @@
-function Get-Config {
+function Get-CtxAutodeployConfig {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -13,7 +13,7 @@ function Get-Config {
         }
     }
     catch {
-        Write-CitrixAutoDeployLog -Message "$($_.Exception.Message)`n`n$($_.Exception.StackTrace)" -EventId 1 -EntryType Error
+        Write-CtxAutodeployLog -Message "$($_.Exception.Message)`n`n$($_.Exception.StackTrace)" -EventId 1 -EntryType Error
         throw $_.Exception
     }
 }

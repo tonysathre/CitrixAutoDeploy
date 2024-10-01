@@ -1,7 +1,7 @@
-function Write-CitrixAutoDeployLog {
+function Write-CtxAutodeployLog {
     [CmdletBinding()]
     param(
-        [string]$Message,
+        [psobject]$Message,
         [int]$EventId,
         [System.Diagnostics.EventLogEntryType]$EntryType
     )
