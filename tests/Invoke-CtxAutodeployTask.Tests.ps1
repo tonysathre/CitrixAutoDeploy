@@ -3,11 +3,6 @@ Describe 'Invoke-CtxAutodeployTask' {
         Import-Module ${PSScriptRoot}\..\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -WarningAction SilentlyContinue
     }
 
-    AfterAll {
-        Remove-Item -Path "${PSScriptRoot}\test_PreTask.ps1" -ErrorAction SilentlyContinue
-        Remove-Item -Path "${PSScriptRoot}\test_PostTask.ps1" -ErrorAction SilentlyContinue
-    }
-
     $TestConfig = Get-CtxAutodeployConfig -FilePath ${PSScriptRoot}\test_config.json
     $TestCases = @(
         @{
