@@ -16,7 +16,7 @@ $Config = Get-CtxAutodeployConfig -FilePath $ConfigFilePath
 foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
     $MonitorDetails = ($AutodeployMonitor | Format-List | Out-String).TrimEnd()
 
-    Write-CtxAutodeployLog -Message "`nAutodeploy job started: ${MonitorDetails}`n" -EventId 0 -EntryType Information
+    Write-CtxAutodeployLog -Message "Autodeploy job started: ${MonitorDetails}`n" -EventId 0 -EntryType Information
 
     $AdminAddress       = $AutodeployMonitor.AdminAddress
     $BrokerCatalog      = Get-BrokerCatalog -AdminAddress $AdminAddress -Name $AutodeployMonitor.BrokerCatalog
@@ -28,7 +28,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         $UnassignedMachines = Get-BrokerMachine -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroup.Name -IsAssigned $false
     }
     catch {
-        Write-CtxAutodeployLog -Message "$($_.Exception.Message)`n`n$($_.Exception.StackTrace)" -EventId 1 -EntryType Error
+        Write-CtxAutodeployLog -Message "ERROR in $($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)" -EventId 1 -EntryType Error
         break
     }
 
@@ -71,7 +71,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             $MachinesToAdd--
         }
         catch {
-            Write-CtxAutodeployLog -Message "$($_.Exception.Message)`n`n$($_.Exception.StackTrace)" -EventId 1 -EntryType Error
+            Write-CtxAutodeployLog -Message "ERROR in $($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)" -EventId 1 -EntryType Error
             break
         }
     }

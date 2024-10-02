@@ -21,8 +21,6 @@ function Invoke-CtxAutodeployTask {
         Write-CtxAutodeployLog -Message "${Type}-task output: ${Output}" -EventId 8 -EntryType Information
     }
     catch {
-        Write-CtxAutodeployLog -Message "Error occurred in ${Type}-task for machine '${Context}'`n`n$($_.Exception.Message)`n`n$($_.Exception.StackTrace)" -EventId 1 -EntryType Error
+        Write-CtxAutodeployLog -Message "ERROR in $($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)" -EventId 1 -EntryType Error
     }
-
-    return $Output
 }
