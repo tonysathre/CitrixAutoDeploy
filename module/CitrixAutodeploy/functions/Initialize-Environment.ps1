@@ -10,7 +10,7 @@ function Initialize-Environment {
         Import-Module $Modules -DisableNameChecking -Force -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
     }
     catch {
-        Write-CtxAutodeployLog -Message $_.Exception -EventId 1 -EntryType Error
+        Write-CtxAutodeployLog -Message "$($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message): $($_.Exception.InnerException)" -EventId 1 -EntryType Error
         throw $_
     }
 

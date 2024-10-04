@@ -56,7 +56,7 @@ function New-CtxAutodeployVM {
     }
     catch {
         $IsSuccessful = $false
-        Write-CtxAutodeployLog -Message "ERROR in $($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)" -EventId 1 -EntryType Error
+        Write-CtxAutodeployLog -Message "$($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message): $($_.Exception.InnerException)" -EventId 1 -EntryType Error
     }
     finally {
         if (-not $NewBrokerMachine) {

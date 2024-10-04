@@ -13,7 +13,7 @@ function Get-CtxAutodeployConfig {
         }
     }
     catch {
-        Write-CtxAutodeployLog -Message "$($_.Exception.Message)`n`n$($_.Exception.StackTrace)" -EventId 1 -EntryType Error
+        Write-CtxAutodeployLog -Message "$($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message): $($_.Exception.InnerException)" -EventId 1 -EntryType Error
         throw $_.Exception
     }
 }
