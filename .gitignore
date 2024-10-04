@@ -3,3 +3,6 @@ citrix_autodeploy_config_email.json
 post-task/*
 pre-task/*
 .vscode/*
+
+# pester code coverage report
+coverage.xml
