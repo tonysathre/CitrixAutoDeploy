@@ -8,34 +8,24 @@ function Write-CtxAutodeployLog {
         [int]$EventId,
 
         [Parameter(Mandatory)]
-        [ValidateSet('Error', 'Information', 'Warning', 'FailureAudit', 'SuccessAudit')]
+        [ValidateSet('Error', 'Information', 'Warning')]
         [System.Diagnostics.EventLogEntryType]$EntryType
     )
 
-    if ($env:CI) {
-        switch ([System.Diagnostics.EventLogEntryType]$EntryType) {
-            'Error' {
-                $Type = 'ERROR'
-            }
-            'Information' {
-                $Type = 'INFO'
-            }
-            'Warning' {
-                $Type = 'WARN'
-            }
-            'FailureAudit' {
-                $Type = 'AUDIT_FAILURE'
-            }
-            'SuccessAudit' {
-                $Type = 'AUDIT_SUCCESS'
-            }
-            default {
-                $Type = 'INFO'
-            }
+    switch ([System.Diagnostics.EventLogEntryType]$EntryType) {
+        'Error' {
+            $Type = 'ERROR'
         }
-
-        return '[{0}] [{1}] {2}' -f [datetime]::Now, $Type, $Message
+        'Information' {
+            $Type = 'INFO'
+        }
+        'Warning' {
+            $Type = 'WARN'
+        }
+        default {
+            $Type = 'INFO'
+        }
     }
 
-    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message $Message -EventId $EventId -EntryType $EntryType
+    '[{0}] [{1}] {2}' -f (Get-Date -Format 'yyyy-mm-dd HH:mm:ss.fff'), $Type, $Message
 }
