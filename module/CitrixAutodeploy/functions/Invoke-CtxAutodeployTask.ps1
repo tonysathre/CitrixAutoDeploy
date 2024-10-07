@@ -2,12 +2,12 @@ function Invoke-CtxAutodeployTask {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$Task,
+        [System.IO.FileInfo]$FilePath,
 
         [Parameter(Mandatory)]
         [PSCustomObject]$ArgumentList,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory)]
         [string]$Context,
 
         [Parameter(Mandatory)]
