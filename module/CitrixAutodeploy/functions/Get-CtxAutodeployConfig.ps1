@@ -1,19 +1,21 @@
 function Get-CtxAutodeployConfig {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [System.IO.FileInfo]$FilePath
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [System.IO.FileInfo]$FilePath = $env:CITRIX_AUTODEPLOY_CONFIG
     )
 
+    Write-VerboseLog -Message "Function {MyCommand} called with parameters: {PSBoundParameters}" -PropertyValues $MyInvocation.MyCommand, ($PSBoundParameters | Out-String)
+
+    Write-InfoLog -Message "Loading configuration from file: '{FilePath}'" -PropertyValues $FilePath
     try {
-        if (Test-Path $FilePath) {
-            return Get-Content $FilePath -Raw | ConvertFrom-Json
-        } else {
-            throw "Configuration file '${FilePath}' not found."
-        }
+        $Config = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
     }
     catch {
-        Write-CtxAutodeployLog -Message "$($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message): $($_.Exception.InnerException)" -EventId 1 -EntryType Error
-        throw $_.Exception
+        Write-ErrorLog -Message "Failed to load configuration from file '{FilePath}'" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $ConfigFilePath
+        throw
     }
+
+    return $Config
 }

@@ -5,28 +5,12 @@ function Initialize-Environment {
         "Citrix.ConfigurationLogging.Commands",
         "Citrix.MachineCreation.Commands"
     )
-
+    Write-VerboseLog -Message "Function {MyCommand} called" -PropertyValues $MyInvocation.MyCommand
     try {
-        Import-Module $Modules -DisableNameChecking -Force -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
+        Import-Module $Modules -DisableNameChecking -Force -ErrorAction Stop -WarningAction SilentlyContinue 4> $null
     }
     catch {
-        Write-CtxAutodeployLog -Message "$($MyInvocation.MyCommand) on line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message): $($_.Exception.InnerException)" -EventId 1 -EntryType Error
-        throw $_
-    }
-
-    if ($env:CI) {
-        return
-    }
-
-    # if (Get-EventLog -LogName 'Citrix Autodeploy' -ErrorAction SilentlyContinue) {
-    #     return
-    # } else {
-    #     throw "'Citrix Autodeploy' event log not found. Please run setup.ps1 to create it."
-    # }
-
-    $EventLogs = Get-EventLog -List
-    if (($EventLogs).Log -notcontains 'Citrix Autodeploy') {
-        Write-CtxAutodeployLog -Message "'Citrix Autodeploy' event log not found. Please run setup.ps1 to create it." -EventId 1 -EntryType Error
-        throw $_
+        Write-ErrorLog -Message "Failed to import module: '{0}'" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $Modules
+        throw
     }
 }
