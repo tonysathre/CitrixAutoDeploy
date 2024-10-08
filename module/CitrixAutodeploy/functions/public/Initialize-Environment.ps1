@@ -15,7 +15,7 @@ function Initialize-Environment {
         Import-Module $Modules -DisableNameChecking -Force -ErrorAction Stop -WarningAction SilentlyContinue 4> $null
     }
     catch {
-        Write-ErrorLog -Message "Failed to import module: '{0}'" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $Modules
+        Write-ErrorLog -Message "Failed to import module: {0}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $Modules
         throw
     }
 }

@@ -18,16 +18,16 @@ function Invoke-CtxAutodeployTask {
 
     Write-VerboseLog -Message "Function {MyCommand} called with parameters: {PSBoundParameters}" -PropertyValues $MyInvocation.MyCommand, ($PSBoundParameters | Out-String)
     Write-VerboseLog -Message "Arguments: {ArgumentList}" -PropertyValues $ArgumentList
-    Write-InfoLog -Message "Executing {Type}-task script '{FilePath}' for '{Context}'" -PropertyValues $Type, $FilePath, $Context
+    Write-InfoLog -Message "Executing {Type}-task script {FilePath} for {Context}" -PropertyValues $Type, $FilePath, $Context
 
     try {
         $Output = & $FilePath
     }
     catch {
-        Write-ErrorLog -Message "An error occurred while executing {Type}-task script '{FilePath}'" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $Type, $FilePath
+        Write-ErrorLog -Message "An error occurred while executing {Type}-task script {FilePath}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $Type, $FilePath
         throw
     }
 
-    Write-InfoLog -Message "{Type}-task script '{FilePath}' output: {Output}" -PropertyValues $Type, $FilePath, $Output
-    Write-InfoLog -Message "{Type}-task script '{FilePath}' executed successfully" -PropertyValues $Type, $FilePath
+    Write-InfoLog -Message "{Type}-task script {FilePath} output: {Output}" -PropertyValues $Type, $FilePath, $Output
+    Write-InfoLog -Message "{Type}-task script {FilePath} executed successfully" -PropertyValues $Type, $FilePath
 }

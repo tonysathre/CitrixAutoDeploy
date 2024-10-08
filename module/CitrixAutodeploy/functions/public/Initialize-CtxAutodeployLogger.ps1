@@ -24,7 +24,7 @@ function Initialize-CtxAutodeployLogger {
         $LoggerConfig = $LoggerConfig | Add-SinkFile -Path $LogFile -OutputTemplate $LogOutputTemplate
     }
 
-    Write-DebugLog -Message 'Starting logger' -PropertyValues $LoggerConfig
+    Write-DebugLog -Message 'Starting logger'
     try {
         $Logger = Start-Logger -LoggerConfig $LoggerConfig -SetAsDefault -PassThru
     }
