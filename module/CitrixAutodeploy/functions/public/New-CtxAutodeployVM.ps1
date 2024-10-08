@@ -11,6 +11,9 @@ function New-CtxAutodeployVM {
         [Parameter(Mandatory)]
         [PSCustomObject]$DesktopGroup,
 
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Logging,
+
         [Parameter()]
         [int]$Timeout = 60
     )
