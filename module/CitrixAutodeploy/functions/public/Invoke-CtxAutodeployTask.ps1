@@ -1,5 +1,6 @@
 function Invoke-CtxAutodeployTask {
     [CmdletBinding()]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
         [System.IO.FileInfo]$FilePath,
@@ -20,12 +21,13 @@ function Invoke-CtxAutodeployTask {
     Write-InfoLog -Message "Executing {Type}-task script '{FilePath}' for '{Context}'" -PropertyValues $Type, $FilePath, $Context
 
     try {
-        $Output = . $Task
+        $Output = & $FilePath
     }
     catch {
         Write-ErrorLog -Message "An error occurred while executing {Type}-task script '{FilePath}'" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $Type, $FilePath
+        throw
     }
 
     Write-InfoLog -Message "{Type}-task script '{FilePath}' output: {Output}" -PropertyValues $Type, $FilePath, $Output
-    Write-InfoLog -Message "{Type}-task script '{FilePath}' executed successfully" -PropertyValues $Type, $Task
+    Write-InfoLog -Message "{Type}-task script '{FilePath}' executed successfully" -PropertyValues $Type, $FilePath
 }

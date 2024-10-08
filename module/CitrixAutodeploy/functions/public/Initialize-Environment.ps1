@@ -1,4 +1,8 @@
 function Initialize-Environment {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param ()
+
     $Modules = @(
         "Citrix.ADIdentity.Commands",
         "Citrix.Broker.Commands",
@@ -6,6 +10,7 @@ function Initialize-Environment {
         "Citrix.MachineCreation.Commands"
     )
     Write-VerboseLog -Message "Function {MyCommand} called" -PropertyValues $MyInvocation.MyCommand
+
     try {
         Import-Module $Modules -DisableNameChecking -Force -ErrorAction Stop -WarningAction SilentlyContinue 4> $null
     }
