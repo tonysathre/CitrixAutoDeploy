@@ -72,12 +72,15 @@ NestedModules = @('.\functions\private\Initialize-InternalLogger.ps1',
                '.\functions\public\Initialize-Environment.ps1', 
                '.\functions\public\Invoke-CtxAutodeployTask.ps1', 
                '.\functions\public\New-CtxAutodeployVM.ps1', 
+               '.\functions\public\Start-CtxHighLevelLogger.ps1', 
+               '.\functions\public\Stop-CtxHighLevelLogger.ps1', 
                '.\functions\public\Wait-ForIdentityPoolUnlock.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = 'Get-CtxAutodeployConfig', 'Initialize-CtxAutodeployLogger', 
                'Initialize-Environment', 'Invoke-CtxAutodeployTask', 
-               'New-CtxAutodeployVM', 'Wait-ForIdentityPoolUnlock'
+               'New-CtxAutodeployVM', 'Start-CtxHighLevelLogger', 
+               'Stop-CtxHighLevelLogger', 'Wait-ForIdentityPoolUnlock'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
