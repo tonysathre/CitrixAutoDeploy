@@ -6,3 +6,4 @@ pre-task/*
 
 # pester code coverage report
 coverage.xml
+*.log

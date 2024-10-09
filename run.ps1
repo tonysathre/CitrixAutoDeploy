@@ -16,4 +16,4 @@ param (
 )
 
 $env:CI = $true
-.\citrix_autodeploy.ps1 -ConfigFilePath .\citrix_autodeploy_config.json
+.\citrix_autodeploy.ps1 @PSBoundParameters
