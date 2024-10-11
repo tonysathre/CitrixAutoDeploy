@@ -30,7 +30,7 @@ Initialize-Environment
 $Config = Get-CtxAutodeployConfig -FilePath $FilePath
 
 foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
-    Write-InfoLog -Message "Starting job: {AutodeployMonitor}" -PropertyValues $AutodeployMonitor
+    Write-InfoLog -Message "Starting job:`n{AutodeployMonitor}" -PropertyValues ($AutodeployMonitor | ConvertTo-Json)
 
     $AdminAddress = $AutodeployMonitor.AdminAddress
     $PreTask      = $AutodeployMonitor.PreTask
