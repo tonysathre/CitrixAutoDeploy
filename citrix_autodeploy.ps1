@@ -30,11 +30,23 @@ Initialize-Environment
 $Config = Get-CtxAutodeployConfig -FilePath $FilePath
 
 foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
-    Write-InfoLog -Message "Starting job: {AutodeployMonitor}" -PropertyValues $AutodeployMonitor
+    Write-InfoLog -Message "Starting job:`n{AutodeployMonitor}" -PropertyValues ($AutodeployMonitor | ConvertTo-Json)
 
-    $AdminAddress = $AutodeployMonitor.AdminAddress
-    $PreTask      = $AutodeployMonitor.PreTask
-    $PostTask     = $AutodeployMonitor.PostTask
+    foreach ($Ddc in $AutodeployMonitor.AdminAddress) {
+        if (Test-DdcConnection -AdminAddress $Ddc -Protocol 'https') {
+            $AdminAddress = $Ddc
+            Write-DebugLog -Message "Using delivery controller {Ddc}" -PropertyValues $Ddc
+            break
+        }
+    }
+
+    if (-Not $AdminAddress) {
+        Write-ErrorLog -Message "Failed to connect to any of the configured delivery controllers"
+        continue
+    }
+
+    $PreTask  = $AutodeployMonitor.PreTask
+    $PostTask = $AutodeployMonitor.PostTask
 
     try {
         $BrokerCatalog = Get-BrokerCatalog -AdminAddress $AdminAddress -Name $AutodeployMonitor.BrokerCatalog
