@@ -38,7 +38,7 @@ $Logger = Initialize-CtxAutodeployLogger -LogLevel $LogLevel -LogFile $LogFile -
 
 Write-DebugLog -Message "Citrix Autodeploy started via {MyCommand} with parameters: {PSBoundParameters}" -PropertyValues $MyInvocation.MyCommand.Source, ($PSBoundParameters | Out-String)
 
-Initialize-Environment
+Initialize-CtxAutodeployEnv
 
 $Config = Get-CtxAutodeployConfig -FilePath $FilePath
 
