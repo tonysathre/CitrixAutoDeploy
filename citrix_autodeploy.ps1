@@ -1,131 +1,169 @@
-﻿try {
-    Add-PSSnapin Citrix.*
-}
-catch {
-    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Citrix Powershell snapins not installed." -EntryType Error -EventId 1
-    Exit 1  
-}
+﻿#Requires -Modules PoShLog
 
-function Import-ConfigFile {
-    try {
-        if (Test-Path (Join-Path $PSScriptRoot citrix_autodeploy_config.json)) {
-            $Config = Get-Content (Join-Path $PSScriptRoot citrix_autodeploy_config.json) | ConvertFrom-Json
-        }
-    }
-    catch {
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
-        throw $Error[0]
-    }
+param (
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [System.IO.FileInfo]$FilePath = $env:CITRIX_AUTODEPLOY_CONFIG,
 
-    return $Config 
-}
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('Verbose', 'Debug', 'Information', 'Warning', 'Error', 'Fatal')]
+    [string]$LogLevel = $env:CITRIX_AUTODEPLOY_LOGLEVEL,
 
-# Check if our custom event log exists
-if ((Get-EventLog -List).Log -notcontains 'Citrix Autodeploy') {
-    throw 'Event log not found.'
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [System.IO.FileInfo]$LogFile = $env:CITRIX_AUTODEPLOY_LOGFILE
+)
+
+if (-not $LogLevel) {
+    $LogLevel = 'Information'
 }
 
-Write-Verbose 'Loading config ...'
-$Config = Import-ConfigFile
+Import-Module ${PSScriptRoot}\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -Scope Local -WarningAction SilentlyContinue 4> $null
+
+$Logger = Initialize-CtxAutodeployLogger -LogLevel $LogLevel -LogFile $LogFile
+
+Write-DebugLog -Message "Citrix Autodeploy started via {MyCommand} with parameters: {PSBoundParameters}" -PropertyValues $MyInvocation.MyCommand.Source, ($PSBoundParameters | Out-String)
+
+Initialize-Environment
+
+$Config = Get-CtxAutodeployConfig -FilePath $FilePath
 
 foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
-    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Autodeploy job started: $(($AutodeployMonitor | Format-List | Out-String))" -EventId 0 -EntryType Information
-    
+    Write-InfoLog -Message "Starting job:`n{AutodeployMonitor}" -PropertyValues ($AutodeployMonitor | ConvertTo-Json)
+
+    foreach ($Ddc in $AutodeployMonitor.AdminAddress) {
+        if (Test-DdcConnection -AdminAddress $Ddc -Protocol 'https') {
+            $AdminAddress = $Ddc
+            Write-DebugLog -Message "Using delivery controller {Ddc}" -PropertyValues $Ddc
+            break
+        }
+    }
+
+    if (-Not $AdminAddress) {
+        Write-ErrorLog -Message "Failed to connect to any of the configured delivery controllers"
+        continue
+    }
+
+    $PreTask  = $AutodeployMonitor.PreTask
+    $PostTask = $AutodeployMonitor.PostTask
+
     try {
-        $AdminAddress       = $AutodeployMonitor.AdminAddress
-        $BrokerCatalog      = Get-BrokerCatalog -AdminAddress $AdminAddress -Name $AutodeployMonitor.BrokerCatalog -ErrorAction Stop
-        $DesktopGroupName   = Get-BrokerDesktopGroup -AdminAddress $AdminAddress -Name $AutodeployMonitor.DesktopGroupName -ErrorAction Stop
-        $UnassignedMachines = Get-BrokerDesktop -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroupName.Name -IsAssigned $false -ErrorAction Stop
-        $MachinesToAdd      = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
-        $PreTask            = $AutodeployMonitor.PreTask
-        $PostTask           = $AutodeployMonitor.PostTask
+        $BrokerCatalog = Get-BrokerCatalog -AdminAddress $AdminAddress -Name $AutodeployMonitor.BrokerCatalog
     }
-
     catch {
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
-        throw $Error[0]
-        break
+        Write-ErrorLog -Message "Failed to read catalog {BrokerCatalog} from delivery controller {DeliveryController}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $AutodeployMonitor.BrokerCatalog, $AutodeployMonitor.AdminAddress
+        continue
     }
 
-    if ($MachinesToAdd -ge 1) {
-        while ($MachinesToAdd -ne 0) {
-            try {  
-                if ($PreTask) {
-                    try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Executing pre-task `'$($AutodeployMonitor.PreTask)`' for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 5 -EntryType Information
-                        $PreTaskOutput = & $PreTask
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Pre-task output`r`n`r`n$PreTaskOutput" -EventId 7 -EntryType Information
-                    }
-                    catch {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in pre-task for desktop group $($AutodeployMonitor.DesktopGroupName)`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
-                    }
-                }
+    try {
+        $DesktopGroup = Get-BrokerDesktopGroup -AdminAddress $AdminAddress -Name $AutodeployMonitor.DesktopGroupName
+    }
+    catch {
+        Write-ErrorLog -Message "Failed to read desktop group {DesktopGroupName} from delivery controller {DeliveryController}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $AutodeployMonitor.BrokerCatalog, $AutodeployMonitor.DesktopGroupName, $AutodeployMonitor.AdminAddress
+        continue
+    }
 
-                $Logging = Start-LogHighLevelOperation -AdminAddress $AdminAddress -Source "Powershell Autodeploy" -StartTime $([datetime]::Now) -Text "Adding 1 Machines to Machine Catalog `'$($BrokerCatalog.Name)`'"
-                $IdentityPool = Get-AcctIdentityPool -AdminAddress $AdminAddress -IdentityPoolName $BrokerCatalog.Name   
-                $IdentityPoolLockedTimeout = 60
-                # Check if identity pool is already locked, and if it is, wait for it to be unlocked.
-                # This may occur if an admin has created machines in Citrix Studio while this script is running.
-                if ($IdentityPool.Lock) {
-                    $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
-                    while ($IdentityPool.Lock -and $Stopwatch.Elapsed.Seconds -le $IdentityPoolLockedTimeout) {
-                        Start-Sleep -Seconds 1
-                    }
-                    $Stopwatch.Stop()
-                }
-                
-                Set-AcctIdentityPool -AdminAddress $AdminAddress -AllowUnicode -Domain $IdentityPool.Domain -IdentityPoolName $IdentityPool.IdentityPoolName -LoggingId $Logging.Id
-                $NewAdAccount = New-AcctADAccount -AdminAddress $AdminAddress -Count 1 -IdentityPoolName $IdentityPool.IdentityPoolName -LoggingId $Logging.Id -ErrorAction Stop
+    try {
+        $UnassignedMachines = Get-BrokerMachine -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroup.Name -IsAssigned $false
+    }
+    catch {
+        Write-ErrorLog -Message "Failed to get unassigned machines for desktop group {DesktopGroupName} from delivery controller {DeliveryController}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $AutodeployMonitor.DesktopGroupName, $AutodeployMonitor.AdminAddress
+        continue
+    }
 
-                $ProvScheme = Get-ProvScheme -AdminAddress $AdminAddress -ProvisioningSchemeName $BrokerCatalog.Name
+    $MachinesToAdd = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
 
-                Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Creating VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and adding to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 2
-                $NewVMProvTask = New-ProvVM -AdminAddress $AdminAddress -ADAccountName $NewAdAccount.SuccessfulAccounts -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -RunAsynchronously -LoggingId $Logging.Id
-                $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
-                $ProvTaskSleep = 15
-                while ($ProvTask.Active -eq $true) {
-                    Start-Sleep -Seconds $ProvTaskSleep
-                    $ProvTask = Get-ProvTask -AdminAddress $AdminAddress -TaskId $NewVMProvTask
-                }
+    if ($MachinesToAdd -le 0) {
+        Write-InfoLog -Message ("No machines to add to catalog {BrokerCatalog}") -PropertyValues $BrokerCatalog.Name
+        continue
+    }
 
-                if (-not($ProvTask.TerminatingError)) {
-                    $NewBrokerMachine = New-BrokerMachine -AdminAddress $AdminAddress -MachineName $NewAdAccount.SuccessfulAccounts.ADAccountSid -CatalogUid $BrokerCatalog.Uid -LoggingId $Logging.Id
-                    Add-BrokerMachine -AdminAddress $AdminAddress -InputObject $NewBrokerMachine -DesktopGroup $DesktopGroupName -LoggingId $Logging.Id
-                }
-               
-                if ($PostTask) {
-                    try {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Executing post-task `'$($AutodeployMonitor.PostTask)`' for machine `'$($NewBrokerMachine.MachineName)`' in desktop group `'$($AutodeployMonitor.DesktopGroupName)`'" -EventId 6 -EntryType Information
-                        $PostTaskOutput = & $PostTask
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Post-task output`r`n`r`n$PostTaskOutput" -EventId 8 -EntryType Information
-                    }
-                    catch {
-                        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Error occured in post-task for machine `'$($NewBrokerMachine.MachineName)`' in desktop group $($AutodeployMonitor.DesktopGroupName)`r`n`r`n$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
-                    }
-                }
-            } 
-            
+    Write-DebugLog -Message "Adding {MachinesToAdd} machines to catalog {BrokerCatalog}" -PropertyValues $MachinesToAdd, $BrokerCatalog.Name
+    while ($MachinesToAdd -gt 0) {
+        try {
+            $Logging = Start-CtxHighLevelLogger -AdminAddress $AdminAddress -Source 'Citrix Autodeploy' -Text "Citrix Autodeploy: Adding 1 machine: Catalog: '$($BrokerCatalog.Name)', DesktopGroup: $($DesktopGroup.Name)"
+        }
+        catch {
+            Write-ErrorLog -Message "Failed to start high-level logging operation" -Exception $_.Exception -ErrorRecord $_
+            continue
+        }
+
+        $IsSuccessful = $true
+
+        if ($PreTask) {
+            $PreTaskArgs = @{
+                'AutodeployMonitor' = $AutodeployMonitor
+                'DesktopGroup'      = $DesktopGroup
+                'BrokerCatalog'     = $BrokerCatalog
+                'Logging'           = $Logging
+            }
+
+            Write-VerboseLog -Message "Invoking pre-task {PreTask}" -PropertyValues $PreTask
+
+            try {
+                Invoke-CtxAutodeployTask -FilePath $PreTask -Type Pre -Context "Catalog: $($BrokerCatalog.Name), DesktopGroup: $($DesktopGroup.Name)" -ArgumentList $PreTaskArgs
+            }
             catch {
-                Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "$($Error[0].ToString())`r`n`r`n $($Error[0].ScriptStackTrace.ToString())" -EntryType Error -EventId 1
-                Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $false
-                break
+                $IsSuccessful = $false
+                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging.Id -IsSuccessful $IsSuccessful
+                continue
             }
+        }
 
-            finally {
-                if (-not($Error)) {
-                    Stop-LogHighLevelOperation -AdminAddress $AdminAddress -HighLevelOperationId $Logging.Id -EndTime $([datetime]::Now) -IsSuccessful $true
-                    Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message "Successfully created VM $($NewAdAccount.SuccessfulAccounts.ADAccountName.ToString().Split('\')[1].Trim('$')) in catalog `'$($BrokerCatalog.Name)`' and added it to delivery group `'$($DesktopGroupName.Name)`'" -EntryType Information -EventId 3
-                }
+        $NewVMParams = @{
+            AdminAddress  = $AdminAddress
+            BrokerCatalog = $BrokerCatalog
+            DesktopGroup  = $DesktopGroup
+            Logging       = $Logging
+        }
 
-                if ($IdentityPool.Lock) {
-                    Unlock-AcctIdentityPool -AdminAddress $AdminAddress -IdentityPoolName $IdentityPool.IdentityPoolName -LoggingId $Logging.Id -ErrorAction SilentlyContinue
-                }
-            }
-			
+        Write-VerboseLog -Message "Creating new machine for catalog {BrokerCatalog}" -PropertyValues $BrokerCatalog.Name
+
+        try {
+            $NewBrokerMachine = New-CtxAutodeployVM @NewVMParams
+        }
+        catch {
+            Write-ErrorLog -Message "An error occurred while adding a machine to catalog {BrokerCatalog}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $BrokerCatalog.Name
+            $IsSuccessful = $false
+            Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+            continue
+        }
+        finally {
             $MachinesToAdd--
         }
-    } else {
-        $Message = "No machines needed for desktop group `'$($AutodeployMonitor.DesktopGroupName)`'`n`nAvailable machines: $($UnassignedMachines.Count)`nRequired available machines: $($AutodeployMonitor.MinAvailableMachines)`n`nAvailable machine names:`n$($UnassignedMachines.DNSName | Format-List | Out-String)"
-        Write-EventLog -LogName 'Citrix Autodeploy' -Source 'Citrix Autodeploy' -Message $Message -EventId 4 -EntryType Information
+
+        if ($PostTask) {
+            $PostTaskArgs = @{
+                'AutodeployMonitor' = $AutodeployMonitor
+                'DesktopGroup'      = $DesktopGroup
+                'BrokerCatalog'     = $BrokerCatalog
+                'NewBrokerMachine'  = $NewBrokerMachine
+                'Logging'           = $Logging
+            }
+        }
+
+        Write-InfoLog -Message "Invoking post-task {PostTask}" -PropertyValues $PostTask
+
+        try {
+            Invoke-CtxAutodeployTask -FilePath $PostTask -Type Post -Context $NewBrokerMachine.MachineName -ArgumentList $PostTaskArgs
+        }
+        catch {
+            $IsSuccessful = $false
+            Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+            continue
+        }
+
+        Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
     }
+
+    Write-InfoLog -Message "Job completed successfully"
 }
+
+if ($InternalLogger) {
+    Write-VerboseLog -Message 'Closing internal logger'
+    $InternalLogger | Close-Logger
+}
+
+Write-VerboseLog -Message 'Closing logger'
+$Logger | Close-Logger
