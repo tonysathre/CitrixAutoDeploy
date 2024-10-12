@@ -75,7 +75,7 @@ NestedModules = @('.\functions\private\Initialize-InternalLogger.ps1',
                '.\functions\public\Start-CtxHighLevelLogger.ps1', 
                '.\functions\public\Stop-CtxHighLevelLogger.ps1', 
                '.\functions\public\Test-DdcConnection.ps1', 
-               '.\functions\public\Test-MaxMachineCount.ps1', 
+               '.\functions\public\Test-MachineCountLimit.ps1', 
                '.\functions\public\Wait-ForIdentityPoolUnlock.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
@@ -83,7 +83,7 @@ FunctionsToExport = 'Get-CtxAutodeployConfig', 'Initialize-CtxAutodeployEnv',
                'Initialize-CtxAutodeployLogger', 'Invoke-CtxAutodeployTask', 
                'New-CtxAutodeployVM', 'Start-CtxHighLevelLogger', 
                'Stop-CtxHighLevelLogger', 'Test-DdcConnection', 
-               'Test-MaxMachineCount', 'Wait-ForIdentityPoolUnlock'
+               'Test-MachineCountLimit', 'Wait-ForIdentityPoolUnlock'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
