@@ -15,8 +15,18 @@ param (
     [System.IO.FileInfo]$LogFile = $env:CITRIX_AUTODEPLOY_LOGFILE,
 
     [Parameter()]
-    $MaxRecordCount = 10000
+    $MaxRecordCount = $(if ($env:CITRIX_AUTODEPLOY_MAXRECORDCOUNT) { $env:CITRIX_AUTODEPLOY_MAXRECORDCOUNT } else { 10000 }),
+
+    [Parameter()]
+    [switch]$DryRun = [System.Convert]::ToBoolean($env:CITRIX_AUTODEPLOY_DRYRUN),
+
+    [Parameter()]
+    [string]$LogOutputTemplate = '[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] {Message:lj}{NewLine}{Exception}'
 )
+
+if ($DryRun) {
+    $LogOutputTemplate = '[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] [DRYRUN] {Message:lj}{NewLine}{Exception}'
+}
 
 if (-not $LogLevel) {
     $LogLevel = 'Information'
@@ -24,7 +34,7 @@ if (-not $LogLevel) {
 
 Import-Module ${PSScriptRoot}\module\CitrixAutodeploy -Force -ErrorAction Stop -DisableNameChecking -Scope Local -WarningAction SilentlyContinue 4> $null
 
-$Logger = Initialize-CtxAutodeployLogger -LogLevel $LogLevel -LogFile $LogFile
+$Logger = Initialize-CtxAutodeployLogger -LogLevel $LogLevel -LogFile $LogFile -LogOutputTemplate $LogOutputTemplate
 
 Write-DebugLog -Message "Citrix Autodeploy started via {MyCommand} with parameters: {PSBoundParameters}" -PropertyValues $MyInvocation.MyCommand.Source, ($PSBoundParameters | Out-String)
 
@@ -60,7 +70,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
     }
 
     if ($AutodeployMonitor.MaxMachinesInBrokerCatalog) {
-        if (Test-MaxMachineCount -AdminAddress $AdminAddress -InputObject $BrokerCatalog -MaxMachines $AutodeployMonitor.MaxMachinesInBrokerCatalog -MaxRecordCount $MaxRecordCount) {
+        if (Test-MachineCountLimit -AdminAddress $AdminAddress -InputObject $BrokerCatalog -MaxMachines $AutodeployMonitor.MaxMachinesInBrokerCatalog -MaxRecordCount $MaxRecordCount) {
             Write-WarningLog -Message "Max machine count ({MaxMachinesInBrokerCatalog}) reached for catalog {BrokerCatalog}" -PropertyValues $AutodeployMonitor.MaxMachinesInDesktopGroup, $BrokerCatalog.Name
             continue
         }
@@ -75,23 +85,40 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
     }
 
     if ($AutodeployMonitor.MaxMachinesInDesktopGroup) {
-        if (Test-MaxMachineCount -AdminAddress $AdminAddress -InputObject $DesktopGroup -MaxMachines $AutodeployMonitor.MaxMachinesInDesktopGroup -MaxRecordCount $MaxRecordCount) {
+        if (Test-MachineCountLimit -AdminAddress $AdminAddress -InputObject $DesktopGroup -MaxMachines $AutodeployMonitor.MaxMachinesInDesktopGroup -MaxRecordCount $MaxRecordCount) {
             Write-WarningLog -Message "Max machine count ({MaxMachinesInDesktopGroup}) reached for desktop group {DesktopGroup}" -PropertyValues $AutodeployMonitor.MaxMachinesInDesktopGroup, $DesktopGroup.Name
             continue
         }
     }
 
+    try {
+        $UnassignedMachines = Get-BrokerMachine -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroup.Name -IsAssigned $false -MaxRecordCount $MaxRecordCount
+        Write-DebugLog -Message "{UnassignedMachines} unassigned machines in desktop group {DesktopGroupName}" -PropertyValues $UnassignedMachines.Count, $DesktopGroup.Name
+    }
+    catch {
+        Write-ErrorLog -Message "Failed to get unassigned machines for desktop group {DesktopGroupName} from delivery controller {DeliveryController}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $AutodeployMonitor.DesktopGroupName, $AutodeployMonitor.AdminAddress
+        continue
+    }
+
     $MachinesToAdd = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
 
     if ($MachinesToAdd -le 0) {
-        Write-InfoLog -Message ("No machines to add to catalog {BrokerCatalog}") -PropertyValues $BrokerCatalog.Name
+        Write-InfoLog -Message "No machines to add to catalog {BrokerCatalog}" -PropertyValues $BrokerCatalog.Name
         continue
     }
 
     Write-DebugLog -Message "Adding {MachinesToAdd} machines to catalog {BrokerCatalog}" -PropertyValues $MachinesToAdd, $BrokerCatalog.Name
     while ($MachinesToAdd -gt 0) {
         try {
-            $Logging = Start-CtxHighLevelLogger -AdminAddress $AdminAddress -Source 'Citrix Autodeploy' -Text "Citrix Autodeploy: Adding 1 machine: Catalog: '$($BrokerCatalog.Name)', DesktopGroup: $($DesktopGroup.Name)"
+            $CtxHighLevelLoggerParams = @{
+                AdminAddress = $AdminAddress
+                Source       = 'Citrix Autodeploy'
+                Text         = "Citrix Autodeploy: Adding 1 machine: Catalog: '$($BrokerCatalog.Name)', DesktopGroup: $($DesktopGroup.Name)"
+            }
+
+            if (-not $DryRun) {
+                $Logging = Start-CtxHighLevelLogger @CtxHighLevelLoggerParams
+            }
         }
         catch {
             Write-ErrorLog -Message "Failed to start high-level logging operation" -Exception $_.Exception -ErrorRecord $_
@@ -101,21 +128,32 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         $IsSuccessful = $true
 
         if ($PreTask) {
-            $PreTaskArgs = @{
+            $ArgumentList = @{
                 'AutodeployMonitor' = $AutodeployMonitor
+                'AdminAddress'      = $AdminAddress
                 'DesktopGroup'      = $DesktopGroup
                 'BrokerCatalog'     = $BrokerCatalog
                 'Logging'           = $Logging
             }
 
-            Write-VerboseLog -Message "Invoking pre-task {PreTask}" -PropertyValues $PreTask
-
             try {
-                Invoke-CtxAutodeployTask -FilePath $PreTask -Type Pre -Context "Catalog: $($BrokerCatalog.Name), DesktopGroup: $($DesktopGroup.Name)" -ArgumentList $PreTaskArgs
+                $CtxAutodeployTask = @{
+                    FilePath     = $PreTask
+                    Type         = 'Pre'
+                    Context      = "Catalog: $($BrokerCatalog.Name), DesktopGroup: $($DesktopGroup.Name)"
+                    ArgumentList = $ArgumentList
+                }
+
+                Write-InfoLog -Message "Invoking pre-task {PreTask}" -PropertyValues $PreTask
+                if (-not $DryRun) {
+                    Invoke-CtxAutodeployTask @CtxAutodeployTask
+                }
             }
             catch {
                 $IsSuccessful = $false
-                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging.Id -IsSuccessful $IsSuccessful
+                if (-not $DryRun) {
+                    Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging.Id -IsSuccessful $IsSuccessful
+                }
                 continue
             }
         }
@@ -127,15 +165,20 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             Logging       = $Logging
         }
 
-        Write-VerboseLog -Message "Creating new machine for catalog {BrokerCatalog}" -PropertyValues $BrokerCatalog.Name
-
         try {
-            $NewBrokerMachine = New-CtxAutodeployVM @NewVMParams
+            Write-InfoLog -Message "Creating new machine for catalog {BrokerCatalog}" -PropertyValues $BrokerCatalog.Name
+            if (-not $DryRun) {
+                $NewBrokerMachine = New-CtxAutodeployVM @NewVMParams
+            }
         }
         catch {
             Write-ErrorLog -Message "An error occurred while adding a machine to catalog {BrokerCatalog}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $BrokerCatalog.Name
             $IsSuccessful = $false
-            Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+
+            if (-not $DryRun) {
+                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+            }
+
             continue
         }
         finally {
@@ -145,6 +188,7 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         if ($PostTask) {
             $PostTaskArgs = @{
                 'AutodeployMonitor' = $AutodeployMonitor
+                'AdminAddress'      = $AdminAddress
                 'DesktopGroup'      = $DesktopGroup
                 'BrokerCatalog'     = $BrokerCatalog
                 'NewBrokerMachine'  = $NewBrokerMachine
@@ -152,27 +196,34 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             }
         }
 
-        Write-InfoLog -Message "Invoking post-task {PostTask}" -PropertyValues $PostTask
-
         try {
-            Invoke-CtxAutodeployTask -FilePath $PostTask -Type Post -Context $NewBrokerMachine.MachineName -ArgumentList $PostTaskArgs
+            Write-InfoLog -Message "Invoking post-task {PostTask}" -PropertyValues $PostTask
+            if (-not $DryRun) {
+                Invoke-CtxAutodeployTask -FilePath $PostTask -Type Post -Context $NewBrokerMachine.MachineName -ArgumentList $PostTaskArgs
+            }
         }
         catch {
             $IsSuccessful = $false
-            Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+
+            if (-not $DryRun) {
+                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+            }
+
             continue
         }
 
-        Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+        if (-not $DryRun) {
+            Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+        }
     }
 
     Write-InfoLog -Message "Job completed successfully"
 }
 
 if ($InternalLogger) {
-    Write-VerboseLog -Message 'Closing internal logger'
+    Write-VerboseLog -Message 'Closing internal PoShLog logger'
     $InternalLogger | Close-Logger
 }
 
-Write-VerboseLog -Message 'Closing logger'
+Write-VerboseLog -Message 'Closing PoShLog logger'
 $Logger | Close-Logger
