@@ -59,6 +59,13 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         continue
     }
 
+    if ($AutodeployMonitor.MaxMachinesInBrokerCatalog) {
+        if (Test-MaxMachineCount -AdminAddress $AdminAddress -InputObject $BrokerCatalog -MaxMachines $AutodeployMonitor.MaxMachinesInBrokerCatalog -MaxRecordCount $MaxRecordCount) {
+            Write-WarningLog -Message "Max machine count ({MaxMachinesInBrokerCatalog}) reached for catalog {BrokerCatalog}" -PropertyValues $AutodeployMonitor.MaxMachinesInDesktopGroup, $BrokerCatalog.Name
+            continue
+        }
+    }
+
     try {
         $DesktopGroup = Get-BrokerDesktopGroup -AdminAddress $AdminAddress -Name $AutodeployMonitor.DesktopGroupName
     }
@@ -67,12 +74,11 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
         continue
     }
 
-    try {
-        $UnassignedMachines = Get-BrokerMachine -AdminAddress $AdminAddress -DesktopGroupName $DesktopGroup.Name -IsAssigned $false
-    }
-    catch {
-        Write-ErrorLog -Message "Failed to get unassigned machines for desktop group {DesktopGroupName} from delivery controller {DeliveryController}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $AutodeployMonitor.DesktopGroupName, $AutodeployMonitor.AdminAddress
-        continue
+    if ($AutodeployMonitor.MaxMachinesInDesktopGroup) {
+        if (Test-MaxMachineCount -AdminAddress $AdminAddress -InputObject $DesktopGroup -MaxMachines $AutodeployMonitor.MaxMachinesInDesktopGroup -MaxRecordCount $MaxRecordCount) {
+            Write-WarningLog -Message "Max machine count ({MaxMachinesInDesktopGroup}) reached for desktop group {DesktopGroup}" -PropertyValues $AutodeployMonitor.MaxMachinesInDesktopGroup, $DesktopGroup.Name
+            continue
+        }
     }
 
     $MachinesToAdd = $AutodeployMonitor.MinAvailableMachines - $UnassignedMachines.Count
