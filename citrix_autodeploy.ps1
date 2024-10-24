@@ -134,27 +134,17 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
             if (-not $DryRun) {
                 $Logging = Start-CtxHighLevelLogger @CtxHighLevelLoggerParams
             }
-        }
-        catch {
-            Write-ErrorLog -Message "Failed to start high-level logging operation" -Exception $_.Exception -ErrorRecord $_
-            continue
-        }
-        finally {
-            $MachinesToAdd--
-        }
 
-        $IsSuccessful = $true
+            # Invoke Pre-task if defined
+            if ($PreTask) {
+                $ArgumentList = @{
+                    AutodeployMonitor = $AutodeployMonitor
+                    AdminAddress      = $AdminAddress
+                    DesktopGroup      = $DesktopGroup
+                    BrokerCatalog     = $BrokerCatalog
+                    Logging           = $Logging
+                }
 
-        if ($PreTask) {
-            $ArgumentList = @{
-                AutodeployMonitor = $AutodeployMonitor
-                AdminAddress      = $AdminAddress
-                DesktopGroup      = $DesktopGroup
-                BrokerCatalog     = $BrokerCatalog
-                Logging           = $Logging
-            }
-
-            try {
                 $CtxAutodeployTask = @{
                     FilePath     = $PreTask
                     Type         = 'Pre'
@@ -166,85 +156,56 @@ foreach ($AutodeployMonitor in $Config.AutodeployMonitors.AutodeployMonitor) {
                 if (-not $DryRun) {
                     Invoke-CtxAutodeployTask @CtxAutodeployTask
                 }
-            }
-            catch {
-                $IsSuccessful = $false
-                if ($Logging) {
-                    Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+
+                # Create machine
+                $NewVMParams = @{
+                    AdminAddress  = $AdminAddress
+                    BrokerCatalog = $BrokerCatalog
+                    DesktopGroup  = $DesktopGroup
+                    Logging       = $Logging
                 }
-                continue
-            }
-            finally {
-                $MachinesToAdd--
+
+                Write-InfoLog -Message "Creating new machine for catalog {BrokerCatalog}" -PropertyValues $BrokerCatalog.Name
+                if (-not $DryRun) {
+                    $NewBrokerMachine = New-CtxAutodeployVM @NewVMParams
+                }
+
+                # Invoke Post-task if defined
+                if ($PostTask) {
+                    $PostTaskArgs = @{
+                        AutodeployMonitor = $AutodeployMonitor
+                        AdminAddress      = $AdminAddress
+                        DesktopGroup      = $DesktopGroup
+                        BrokerCatalog     = $BrokerCatalog
+                        NewBrokerMachine  = $NewBrokerMachine
+                        Logging           = $Logging
+                    }
+                }
+
+                Write-InfoLog -Message "Invoking post-task {PostTask}" -PropertyValues $PostTask
+                if (-not $DryRun) {
+                    Invoke-CtxAutodeployTask -FilePath $PostTask -Type Post -Context $NewBrokerMachine.MachineName -ArgumentList $PostTaskArgs
+                }
             }
         }
 
-        $NewVMParams = @{
-            AdminAddress  = $AdminAddress
-            BrokerCatalog = $BrokerCatalog
-            DesktopGroup  = $DesktopGroup
-            Logging       = $Logging
-        }
-
-        try {
-            Write-InfoLog -Message "Creating new machine for catalog {BrokerCatalog}" -PropertyValues $BrokerCatalog.Name
-            if (-not $DryRun) {
-                $NewBrokerMachine = New-CtxAutodeployVM @NewVMParams
-            }
-        }
         catch {
-            Write-ErrorLog -Message "An error occurred while adding a machine to catalog {BrokerCatalog}" -Exception $_.Exception -ErrorRecord $_ -PropertyValues $BrokerCatalog.Name
-            $IsSuccessful = $false
+            $JobSuccessful = $false
+        }
+
+        finally {
+            if ($JobSuccessful) {
+                Write-InfoLog -Message 'Job completed successfully'
+            } else {
+                Write-ErrorLog -Message 'Job failed'
+            }
 
             if ($Logging) {
-                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
+                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $JobSuccessful
             }
 
-            continue
-        }
-        finally {
             $MachinesToAdd--
         }
-
-        if ($PostTask) {
-            $PostTaskArgs = @{
-                AutodeployMonitor = $AutodeployMonitor
-                AdminAddress      = $AdminAddress
-                DesktopGroup      = $DesktopGroup
-                BrokerCatalog     = $BrokerCatalog
-                NewBrokerMachine  = $NewBrokerMachine
-                Logging           = $Logging
-            }
-        }
-
-        try {
-            Write-InfoLog -Message "Invoking post-task {PostTask}" -PropertyValues $PostTask
-            if (-not $DryRun) {
-                Invoke-CtxAutodeployTask -FilePath $PostTask -Type Post -Context $NewBrokerMachine.MachineName -ArgumentList $PostTaskArgs
-            }
-        }
-        catch {
-            $IsSuccessful = $false
-
-            if ($Logging) {
-                Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
-            }
-
-            continue
-        }
-        finally {
-            $MachinesToAdd--
-        }
-
-        if ($Logging) {
-            Stop-CtxHighLevelLogger -AdminAddress $AdminAddress -Logging $Logging -IsSuccessful $IsSuccessful
-        }
-    }
-
-    if ($IsSuccessful) {
-        Write-InfoLog -Message "Job completed successfully"
-    } else {
-        Write-ErrorLog -Message "Job failed"
     }
 }
 
